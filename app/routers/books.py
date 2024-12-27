@@ -4,8 +4,7 @@ from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import (
     BookSchema,
-    BookCreateSchema,
-    BookUpdateSchema,
+    ChangeBookSchema
 )
 from ..crud import book as crud
 
@@ -29,7 +28,7 @@ async def get_book(book_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=BookSchema, status_code=201)
-async def create_book_service(book: BookCreateSchema, db: Session = Depends(get_db)):
+async def create_book_service(book: ChangeBookSchema, db: Session = Depends(get_db)):
     book = crud.create_book(db, title=book.title, description=book.description)
     return book
 
@@ -40,7 +39,7 @@ async def create_book_service(book: BookCreateSchema, db: Session = Depends(get_
     responses={404: {"detail": "Book not found"}},
 )
 async def update_book(
-    book_id: int, book: BookUpdateSchema, db: Session = Depends(get_db)
+    book_id: int, book: ChangeBookSchema, db: Session = Depends(get_db)
 ):
     book = crud.update_book(
         db,

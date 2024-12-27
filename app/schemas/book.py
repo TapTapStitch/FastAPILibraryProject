@@ -7,11 +7,6 @@ class BookSchema(BaseModel):
     description: str
 
 
-class BookCreateSchema(BaseModel):
-    title: str
-    description: str
-
-
-class BookUpdateSchema(BaseModel):
+class ChangeBookSchema(BaseModel):
     title: str
     description: str
