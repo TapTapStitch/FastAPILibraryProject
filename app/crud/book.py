@@ -15,25 +15,27 @@ def get_book_by_id(db: Session, book_id: int):
 
 
 def create_book(db: Session, title: str, description: str):
-    _book = Book(title=title, description=description)
-    db.add(_book)
+    description = description if description is not None else ""
+    book = Book(title=title, description=description)
+    db.add(book)
     db.commit()
-    db.refresh(_book)
-    return _book
+    db.refresh(book)
+    return book
 
 
 def remove_book(db: Session, book_id: int):
-    _book = get_book_by_id(db=db, book_id=book_id)
-    db.delete(_book)
+    book = get_book_by_id(db=db, book_id=book_id)
+    db.delete(book)
     db.commit()
 
 
 def update_book(db: Session, book_id: int, title: str, description: str):
-    _book = get_book_by_id(db=db, book_id=book_id)
+    book = get_book_by_id(db=db, book_id=book_id)
 
-    _book.title = title
-    _book.description = description
+    book.title = title
+    if description is not None:
+        book.description = description
 
     db.commit()
-    db.refresh(_book)
-    return _book
+    db.refresh(book)
+    return book
