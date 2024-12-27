@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Depends
-from ..config import SessionLocal
+from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import (
     BookSchema,
@@ -10,14 +10,6 @@ from ..schemas.book import (
 from ..crud import book as crud
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/", response_model=list[BookSchema])
