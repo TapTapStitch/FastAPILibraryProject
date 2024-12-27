@@ -2,10 +2,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from ..config import get_db
 from sqlalchemy.orm import Session
-from ..schemas.book import (
-    BookSchema,
-    ChangeBookSchema
-)
+from ..schemas.book import BookSchema, ChangeBookSchema
 from ..crud import book as crud
 
 router = APIRouter()
