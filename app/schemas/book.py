@@ -6,18 +6,12 @@ class BookSchema(BaseModel):
     title: str
     description: str
 
-    class Config:
-        from_attributes = True
-
 
 class BookCreateSchema(BaseModel):
     title: str
-    description: str
+    description: str | None = None
 
 
 class BookUpdateSchema(BaseModel):
     title: str
-    description: str
-
-    class Config:
-        from_attributes = True
+    description: str | None = None
