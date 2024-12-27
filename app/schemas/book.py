@@ -1,11 +1,10 @@
-from typing import Optional
 from pydantic import BaseModel
 
 
 class BookSchema(BaseModel):
     id: int
     title: str
-    description: Optional[str] = None
+    description: str
 
     class Config:
         from_attributes = True
@@ -13,12 +12,12 @@ class BookSchema(BaseModel):
 
 class BookCreateSchema(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str
 
 
 class BookUpdateSchema(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str
+    description: str
 
     class Config:
         from_attributes = True
