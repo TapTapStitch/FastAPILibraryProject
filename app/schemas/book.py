@@ -2,16 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class BookIndexSchema(BaseModel):
-    id: int
-    title: str
-    description: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class BookShowSchema(BaseModel):
+class BookSchema(BaseModel):
     id: int
     title: str
     description: Optional[str] = None

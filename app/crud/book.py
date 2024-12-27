@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from ..models.book import Book
 
 
@@ -7,7 +8,10 @@ def get_books(db: Session):
 
 
 def get_book_by_id(db: Session, book_id: int):
-    return db.query(Book).filter(Book.id == book_id).first()
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book
 
 
 def create_book(db: Session, title: str, description: str):
