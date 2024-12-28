@@ -1,8 +1,5 @@
 from fastapi import FastAPI
-from .config import Base, engine
 from .routers import books
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 

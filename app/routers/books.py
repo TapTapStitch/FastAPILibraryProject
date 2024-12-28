@@ -3,9 +3,10 @@ from fastapi import Depends
 from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import BookSchema, ChangeBookSchema
-from ..crud import book as crud
+from ..crud.books import BooksCrud
 
 router = APIRouter()
+crud = BooksCrud()
 
 
 @router.get("/", response_model=list[BookSchema])
