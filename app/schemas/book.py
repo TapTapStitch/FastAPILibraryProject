@@ -13,3 +13,6 @@ class BookSchema(BaseModel):
 class ChangeBookSchema(BaseModel):
     title: str
     description: str
+
+    class Config:
+        extra = "forbid"

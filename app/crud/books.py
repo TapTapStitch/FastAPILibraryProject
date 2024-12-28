@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from fastapi import HTTPException
 from ..models.book import Book
+from ..schemas.book import ChangeBookSchema
 
 
 class BooksCrud:
@@ -14,8 +15,8 @@ class BooksCrud:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
 
-    def create_book(self, db: Session, title: str, description: str):
-        book = Book(title=title, description=description)
+    def create_book(self, db: Session, book_data: ChangeBookSchema):
+        book = Book(**book_data.model_dump())
         db.add(book)
         db.commit()
         db.refresh(book)
@@ -26,10 +27,10 @@ class BooksCrud:
         db.delete(book)
         db.commit()
 
-    def update_book(self, db: Session, book_id: int, title: str, description: str):
+    def update_book(self, db: Session, book_id: int, book_data: ChangeBookSchema):
         book = self.get_book_by_id(db=db, book_id=book_id)
-        book.title = title
-        book.description = description
+        for field, value in book_data.model_dump(exclude_unset=True).items():
+            setattr(book, field, value)
         db.commit()
         db.refresh(book)
         return book

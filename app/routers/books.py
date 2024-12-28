@@ -28,7 +28,7 @@ async def get_book(book_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=BookSchema, status_code=201)
 async def create_book_service(book: ChangeBookSchema, db: Session = Depends(get_db)):
-    book = crud.create_book(db, title=book.title, description=book.description)
+    book = crud.create_book(db, book_data=book)
     return book
 
 
@@ -43,8 +43,7 @@ async def update_book(
     book = crud.update_book(
         db,
         book_id=book_id,
-        title=book.title,
-        description=book.description,
+        book_data=book,
     )
     return book
 
