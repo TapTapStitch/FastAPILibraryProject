@@ -1,7 +1,9 @@
 from fastapi import FastAPI
+from fastapi_pagination import add_pagination
 from .routers import books
 
-app = FastAPI()
+app = FastAPI(debug=True)
+add_pagination(app)
 
 
 @app.get("/")

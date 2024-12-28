@@ -1,5 +1,6 @@
-from fastapi import APIRouter
-from fastapi import Depends
+from fastapi import APIRouter, Depends
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import BookSchema, ChangeBookSchema
@@ -9,10 +10,10 @@ router = APIRouter()
 crud = BooksCrud()
 
 
-@router.get("/", response_model=list[BookSchema])
+@router.get("/", response_model=Page[BookSchema])
 async def get_books(db: Session = Depends(get_db)):
     books = crud.get_books(db)
-    return books
+    return paginate(books)
 
 
 @router.get(

@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from fastapi import HTTPException
 from ..models.book import Book
 
 
 class BooksCrud:
     def get_books(self, db: Session):
-        return db.query(Book).all()
+        return db.query(Book).order_by(desc(Book.created_at))
 
     def get_book_by_id(self, db: Session, book_id: int):
         book = db.query(Book).filter(Book.id == book_id).first()
