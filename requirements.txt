@@ -2,6 +2,7 @@ fastapi
 uvicorn
 black
 sqlalchemy
+sqlalchemy-utils
 psycopg2
 python-dotenv
 alembic
