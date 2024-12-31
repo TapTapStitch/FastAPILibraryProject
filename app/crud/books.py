@@ -3,7 +3,7 @@ from sqlalchemy import desc
 from fastapi import HTTPException
 from ..models.book import Book
 from ..models.author import Author
-from ..schemas.book import ChangeBookSchema
+from ..schemas.book import CreateBookSchema, UpdateBookSchema
 
 
 class BooksCrud:
@@ -25,7 +25,7 @@ class BooksCrud:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
 
-    def create_book(self, db: Session, book_data: ChangeBookSchema):
+    def create_book(self, db: Session, book_data: CreateBookSchema):
         if db.query(Book).filter(Book.isbn == book_data.isbn).first():
             raise HTTPException(status_code=400, detail="ISBN must be unique")
 
@@ -46,26 +46,28 @@ class BooksCrud:
         db.refresh(book)
         return book
 
-    def update_book(self, db: Session, book_id: int, book_data: ChangeBookSchema):
+    def update_book(self, db: Session, book_id: int, book_data: UpdateBookSchema):
         book = self.get_book_by_id(db=db, book_id=book_id)
         updated_data = book_data.model_dump(exclude_unset=True)
 
-        if updated_data["isbn"] != book.isbn:
+        if "isbn" in updated_data and updated_data["isbn"] != book.isbn:
             existing_book = (
                 db.query(Book).filter(Book.isbn == updated_data["isbn"]).first()
             )
             if existing_book:
                 raise HTTPException(status_code=400, detail="ISBN must be unique")
 
-        authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
-
-        if len(authors) != len(book_data.authors):
-            raise HTTPException(status_code=404, detail="One or more authors not found")
-
-        updated_data["authors"] = authors
+        if "authors" in updated_data:
+            authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+            if len(authors) != len(book_data.authors):
+                raise HTTPException(
+                    status_code=404, detail="One or more authors not found"
+                )
+            updated_data["authors"] = authors
 
         for field, value in updated_data.items():
             setattr(book, field, value)
+
         db.commit()
         db.refresh(book)
         return book

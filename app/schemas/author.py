@@ -24,12 +24,23 @@ class AuthorSchema(BaseModel):
     books: List[BookInAuthorSchema]
 
 
-class ChangeAuthorSchema(BaseModel):
+class CreateAuthorSchema(BaseModel):
     name: str
     surname: str
     year_of_birth: int = Field(..., ge=1000, le=9999)
     biography: str | None = ""
     books: List[int] | None = []
+
+    class Config:
+        extra = "forbid"
+
+
+class UpdateAuthorSchema(BaseModel):
+    name: str | None = None
+    surname: str | None = None
+    year_of_birth: int | None = Field(None, ge=1000, le=9999)
+    biography: str | None = None
+    books: List[int] | None = None
 
     class Config:
         extra = "forbid"

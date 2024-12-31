@@ -3,7 +3,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from ..config import get_db
 from sqlalchemy.orm import Session
-from ..schemas.book import BookSchema, ChangeBookSchema
+from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
 from ..crud.books import BooksCrud
 
 router = APIRouter()
@@ -61,7 +61,7 @@ async def get_book(book_id: int, db: Session = Depends(get_db)):
         },
     },
 )
-async def create_book_service(book: ChangeBookSchema, db: Session = Depends(get_db)):
+async def create_book_service(book: CreateBookSchema, db: Session = Depends(get_db)):
     book = crud.create_book(db, book_data=book)
     return book
 
@@ -96,7 +96,7 @@ async def create_book_service(book: ChangeBookSchema, db: Session = Depends(get_
     },
 )
 async def update_book(
-    book_id: int, book: ChangeBookSchema, db: Session = Depends(get_db)
+    book_id: int, book: UpdateBookSchema, db: Session = Depends(get_db)
 ):
     book = crud.update_book(
         db,

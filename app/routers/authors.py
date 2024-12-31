@@ -3,7 +3,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from ..config import get_db
 from sqlalchemy.orm import Session
-from ..schemas.author import AuthorSchema, ChangeAuthorSchema
+from ..schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchema
 from ..crud.authors import AuthorsCrud
 
 router = APIRouter()
@@ -56,7 +56,7 @@ async def get_author(author_id: int, db: Session = Depends(get_db)):
     },
 )
 async def create_author_service(
-    author: ChangeAuthorSchema, db: Session = Depends(get_db)
+    author: CreateAuthorSchema, db: Session = Depends(get_db)
 ):
     author = crud.create_author(db, author_data=author)
     return author
@@ -86,7 +86,7 @@ async def create_author_service(
     },
 )
 async def update_author(
-    author_id: int, author: ChangeAuthorSchema, db: Session = Depends(get_db)
+    author_id: int, author: UpdateAuthorSchema, db: Session = Depends(get_db)
 ):
     author = crud.update_author(
         db,

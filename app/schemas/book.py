@@ -24,12 +24,23 @@ class BookSchema(BaseModel):
     authors: List[AuthorInBookSchema]
 
 
-class ChangeBookSchema(BaseModel):
+class CreateBookSchema(BaseModel):
     title: str
     description: str | None = ""
     year_of_publication: int = Field(..., ge=1000, le=9999)
     isbn: str = Field(..., min_length=13, max_length=13, pattern=r"^\d{13}$")
     authors: List[int] | None = []
+
+    class Config:
+        extra = "forbid"
+
+
+class UpdateBookSchema(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    year_of_publication: int | None = Field(None, ge=1000, le=9999)
+    isbn: str | None = Field(None, min_length=13, max_length=13, pattern=r"^\d{13}$")
+    authors: List[int] | None = None
 
     class Config:
         extra = "forbid"
