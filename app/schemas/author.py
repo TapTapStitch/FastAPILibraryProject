@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 
 class BookInAuthorSchema(BaseModel):
@@ -29,7 +29,7 @@ class ChangeAuthorSchema(BaseModel):
     surname: str
     year_of_birth: int = Field(..., ge=1000, le=9999)
     biography: str | None = ""
-    books: Optional[List[int]] = []
+    books: List[int] | None = []
 
     class Config:
         extra = "forbid"
