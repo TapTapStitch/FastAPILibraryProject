@@ -1,16 +1,26 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc
 from fastapi import HTTPException
 from ..models.book import Book
+from ..models.author import Author
 from ..schemas.book import ChangeBookSchema
 
 
 class BooksCrud:
     def get_books(self, db: Session):
-        return db.query(Book).order_by(desc(Book.created_at))
+        return (
+            db.query(Book)
+            .options(selectinload(Book.authors))
+            .order_by(desc(Book.created_at))
+        )
 
     def get_book_by_id(self, db: Session, book_id: int):
-        book = db.query(Book).filter(Book.id == book_id).first()
+        book = (
+            db.query(Book)
+            .options(selectinload(Book.authors))
+            .filter(Book.id == book_id)
+            .first()
+        )
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
@@ -19,7 +29,18 @@ class BooksCrud:
         if db.query(Book).filter(Book.isbn == book_data.isbn).first():
             raise HTTPException(status_code=400, detail="ISBN must be unique")
 
-        book = Book(**book_data.model_dump())
+        authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+
+        if len(authors) != len(book_data.authors):
+            raise HTTPException(status_code=404, detail="One or more authors not found")
+
+        book = Book(
+            title=book_data.title,
+            description=book_data.description,
+            year_of_publication=book_data.year_of_publication,
+            isbn=book_data.isbn,
+            authors=authors,
+        )
         db.add(book)
         db.commit()
         db.refresh(book)
@@ -35,6 +56,13 @@ class BooksCrud:
             )
             if existing_book:
                 raise HTTPException(status_code=400, detail="ISBN must be unique")
+
+        authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+
+        if len(authors) != len(book_data.authors):
+            raise HTTPException(status_code=404, detail="One or more authors not found")
+
+        updated_data["authors"] = authors
 
         for field, value in updated_data.items():
             setattr(book, field, value)
