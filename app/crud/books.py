@@ -16,6 +16,9 @@ class BooksCrud:
         return book
 
     def create_book(self, db: Session, book_data: ChangeBookSchema):
+        if db.query(Book).filter(Book.isbn == book_data.isbn).first():
+            raise HTTPException(status_code=400, detail="ISBN must be unique")
+
         book = Book(**book_data.model_dump())
         db.add(book)
         db.commit()
@@ -29,7 +32,16 @@ class BooksCrud:
 
     def update_book(self, db: Session, book_id: int, book_data: ChangeBookSchema):
         book = self.get_book_by_id(db=db, book_id=book_id)
-        for field, value in book_data.model_dump(exclude_unset=True).items():
+        updated_data = book_data.model_dump(exclude_unset=True)
+
+        if updated_data["isbn"] != book.isbn:
+            existing_book = (
+                db.query(Book).filter(Book.isbn == updated_data["isbn"]).first()
+            )
+            if existing_book:
+                raise HTTPException(status_code=400, detail="ISBN must be unique")
+
+        for field, value in updated_data.items():
             setattr(book, field, value)
         db.commit()
         db.refresh(book)
