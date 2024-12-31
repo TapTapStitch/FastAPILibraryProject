@@ -25,11 +25,6 @@ class BooksCrud:
         db.refresh(book)
         return book
 
-    def remove_book(self, db: Session, book_id: int):
-        book = self.get_book_by_id(db=db, book_id=book_id)
-        db.delete(book)
-        db.commit()
-
     def update_book(self, db: Session, book_id: int, book_data: ChangeBookSchema):
         book = self.get_book_by_id(db=db, book_id=book_id)
         updated_data = book_data.model_dump(exclude_unset=True)
@@ -46,3 +41,8 @@ class BooksCrud:
         db.commit()
         db.refresh(book)
         return book
+
+    def remove_book(self, db: Session, book_id: int):
+        book = self.get_book_by_id(db=db, book_id=book_id)
+        db.delete(book)
+        db.commit()
