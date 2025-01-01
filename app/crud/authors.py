@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc
 from fastapi import HTTPException
+from fastapi_pagination.ext.sqlalchemy import paginate
 from ..models.author import Author
 from ..models.book import Book
 from ..schemas.author import CreateAuthorSchema, UpdateAuthorSchema
@@ -8,25 +9,21 @@ from ..schemas.author import CreateAuthorSchema, UpdateAuthorSchema
 
 class AuthorsCrud:
     def get_authors(self, db: Session):
-        return (
+        authors = (
             db.query(Author)
             .options(selectinload(Author.books))
             .order_by(desc(Author.created_at))
         )
+        return paginate(authors)
 
     def get_author_by_id(self, db: Session, author_id: int):
-        author = (
-            db.query(Author)
-            .options(selectinload(Author.books))
-            .filter(Author.id == author_id)
-            .first()
-        )
+        author = db.query(Author).filter(Author.id == author_id).first()
         if not author:
             raise HTTPException(status_code=404, detail="Author not found")
         return author
 
     def create_author(self, db: Session, author_data: CreateAuthorSchema):
-        books = db.query(Book).filter(Author.id.in_(author_data.books)).all()
+        books = db.query(Book).filter(Book.id.in_(author_data.books)).all()
 
         if len(books) != len(author_data.books):
             raise HTTPException(status_code=404, detail="One or more books not found")
@@ -50,7 +47,7 @@ class AuthorsCrud:
         updated_data = author_data.model_dump(exclude_unset=True)
 
         if "books" in updated_data:
-            books = db.query(Book).filter(Author.id.in_(author_data.books)).all()
+            books = db.query(Book).filter(Book.id.in_(author_data.books)).all()
             if len(books) != len(author_data.books):
                 raise HTTPException(
                     status_code=404, detail="One or more books not found"

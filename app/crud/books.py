@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc
 from fastapi import HTTPException
+from fastapi_pagination.ext.sqlalchemy import paginate
 from ..models.book import Book
 from ..models.author import Author
 from ..schemas.book import CreateBookSchema, UpdateBookSchema
@@ -8,19 +9,15 @@ from ..schemas.book import CreateBookSchema, UpdateBookSchema
 
 class BooksCrud:
     def get_books(self, db: Session):
-        return (
+        books = (
             db.query(Book)
             .options(selectinload(Book.authors))
             .order_by(desc(Book.created_at))
         )
+        return paginate(books)
 
     def get_book_by_id(self, db: Session, book_id: int):
-        book = (
-            db.query(Book)
-            .options(selectinload(Book.authors))
-            .filter(Book.id == book_id)
-            .first()
-        )
+        book = db.query(Book).filter(Book.id == book_id).first()
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         return book

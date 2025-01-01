@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
@@ -12,8 +11,7 @@ crud = BooksCrud()
 
 @router.get("/", response_model=Page[BookSchema])
 async def get_books(db: Session = Depends(get_db)):
-    books = crud.get_books(db)
-    return paginate(books)
+    return crud.get_books(db)
 
 
 @router.get(
@@ -36,8 +34,7 @@ async def get_books(db: Session = Depends(get_db)):
     },
 )
 async def get_book(book_id: int, db: Session = Depends(get_db)):
-    book = crud.get_book_by_id(db, book_id=book_id)
-    return book
+    return crud.get_book_by_id(db, book_id=book_id)
 
 
 @router.post(
@@ -62,8 +59,7 @@ async def get_book(book_id: int, db: Session = Depends(get_db)):
     },
 )
 async def create_book_service(book: CreateBookSchema, db: Session = Depends(get_db)):
-    book = crud.create_book(db, book_data=book)
-    return book
+    return crud.create_book(db, book_data=book)
 
 
 @router.patch(
@@ -98,12 +94,11 @@ async def create_book_service(book: CreateBookSchema, db: Session = Depends(get_
 async def update_book(
     book_id: int, book: UpdateBookSchema, db: Session = Depends(get_db)
 ):
-    book = crud.update_book(
+    return crud.update_book(
         db,
         book_id=book_id,
         book_data=book,
     )
-    return book
 
 
 @router.delete(
@@ -126,5 +121,4 @@ async def update_book(
     },
 )
 async def delete_book(book_id: int, db: Session = Depends(get_db)):
-    crud.remove_book(db, book_id=book_id)
-    return None
+    return crud.remove_book(db, book_id=book_id)

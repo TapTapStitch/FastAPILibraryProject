@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchema
@@ -12,8 +11,7 @@ crud = AuthorsCrud()
 
 @router.get("/", response_model=Page[AuthorSchema])
 async def get_authors(db: Session = Depends(get_db)):
-    authors = crud.get_authors(db)
-    return paginate(authors)
+    return crud.get_authors(db)
 
 
 @router.get(
@@ -36,8 +34,7 @@ async def get_authors(db: Session = Depends(get_db)):
     },
 )
 async def get_author(author_id: int, db: Session = Depends(get_db)):
-    author = crud.get_author_by_id(db, author_id=author_id)
-    return author
+    return crud.get_author_by_id(db, author_id=author_id)
 
 
 @router.post(
@@ -58,8 +55,7 @@ async def get_author(author_id: int, db: Session = Depends(get_db)):
 async def create_author_service(
     author: CreateAuthorSchema, db: Session = Depends(get_db)
 ):
-    author = crud.create_author(db, author_data=author)
-    return author
+    return crud.create_author(db, author_data=author)
 
 
 @router.patch(
@@ -88,12 +84,11 @@ async def create_author_service(
 async def update_author(
     author_id: int, author: UpdateAuthorSchema, db: Session = Depends(get_db)
 ):
-    author = crud.update_author(
+    return crud.update_author(
         db,
         author_id=author_id,
         author_data=author,
     )
-    return author
 
 
 @router.delete(
@@ -116,5 +111,4 @@ async def update_author(
     },
 )
 async def delete_author(author_id: int, db: Session = Depends(get_db)):
-    crud.remove_author(db, author_id=author_id)
-    return None
+    return crud.remove_author(db, author_id=author_id)

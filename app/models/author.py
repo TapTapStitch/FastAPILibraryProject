@@ -19,6 +19,5 @@ class Author(Base):
     books = relationship(
         "Book",
         secondary=book_author_association,
-        back_populates="authors",
-        cascade="all, delete",
+        back_populates="authors"
     )
