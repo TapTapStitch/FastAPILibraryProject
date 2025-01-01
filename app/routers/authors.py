@@ -6,12 +6,15 @@ from ..schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchem
 from ..crud.authors import AuthorsCrud
 
 router = APIRouter()
-crud = AuthorsCrud()
+
+
+def get_authors_crud(db: Session = Depends(get_db)) -> AuthorsCrud:
+    return AuthorsCrud(db)
 
 
 @router.get("/", response_model=Page[AuthorSchema])
-async def get_authors(db: Session = Depends(get_db)):
-    return crud.get_authors(db)
+async def get_authors(crud: AuthorsCrud = Depends(get_authors_crud)):
+    return crud.get_authors()
 
 
 @router.get(
@@ -33,8 +36,8 @@ async def get_authors(db: Session = Depends(get_db)):
         },
     },
 )
-async def get_author(author_id: int, db: Session = Depends(get_db)):
-    return crud.get_author_by_id(db, author_id=author_id)
+async def get_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_crud)):
+    return crud.get_author_by_id(author_id=author_id)
 
 
 @router.post(
@@ -53,9 +56,9 @@ async def get_author(author_id: int, db: Session = Depends(get_db)):
     },
 )
 async def create_author_service(
-    author: CreateAuthorSchema, db: Session = Depends(get_db)
+    author: CreateAuthorSchema, crud: AuthorsCrud = Depends(get_authors_crud)
 ):
-    return crud.create_author(db, author_data=author)
+    return crud.create_author(author_data=author)
 
 
 @router.patch(
@@ -82,10 +85,11 @@ async def create_author_service(
     },
 )
 async def update_author(
-    author_id: int, author: UpdateAuthorSchema, db: Session = Depends(get_db)
+    author_id: int,
+    author: UpdateAuthorSchema,
+    crud: AuthorsCrud = Depends(get_authors_crud),
 ):
     return crud.update_author(
-        db,
         author_id=author_id,
         author_data=author,
     )
@@ -110,5 +114,5 @@ async def update_author(
         },
     },
 )
-async def delete_author(author_id: int, db: Session = Depends(get_db)):
-    return crud.remove_author(db, author_id=author_id)
+async def delete_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_crud)):
+    return crud.remove_author(author_id=author_id)

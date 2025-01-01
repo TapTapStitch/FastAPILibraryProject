@@ -8,22 +8,25 @@ from ..schemas.author import CreateAuthorSchema, UpdateAuthorSchema
 
 
 class AuthorsCrud:
-    def get_authors(self, db: Session):
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_authors(self):
         authors = (
-            db.query(Author)
+            self.db.query(Author)
             .options(selectinload(Author.books))
             .order_by(desc(Author.created_at))
         )
         return paginate(authors)
 
-    def get_author_by_id(self, db: Session, author_id: int):
-        author = db.query(Author).filter(Author.id == author_id).first()
+    def get_author_by_id(self, author_id: int):
+        author = self.db.query(Author).filter(Author.id == author_id).first()
         if not author:
             raise HTTPException(status_code=404, detail="Author not found")
         return author
 
-    def create_author(self, db: Session, author_data: CreateAuthorSchema):
-        books = db.query(Book).filter(Book.id.in_(author_data.books)).all()
+    def create_author(self, author_data: CreateAuthorSchema):
+        books = self.db.query(Book).filter(Book.id.in_(author_data.books)).all()
 
         if len(books) != len(author_data.books):
             raise HTTPException(status_code=404, detail="One or more books not found")
@@ -35,19 +38,17 @@ class AuthorsCrud:
             biography=author_data.biography,
             books=books,
         )
-        db.add(author)
-        db.commit()
-        db.refresh(author)
+        self.db.add(author)
+        self.db.commit()
+        self.db.refresh(author)
         return author
 
-    def update_author(
-        self, db: Session, author_id: int, author_data: UpdateAuthorSchema
-    ):
-        author = self.get_author_by_id(db=db, author_id=author_id)
+    def update_author(self, author_id: int, author_data: UpdateAuthorSchema):
+        author = self.get_author_by_id(author_id=author_id)
         updated_data = author_data.model_dump(exclude_unset=True)
 
         if "books" in updated_data:
-            books = db.query(Book).filter(Book.id.in_(author_data.books)).all()
+            books = self.db.query(Book).filter(Book.id.in_(author_data.books)).all()
             if len(books) != len(author_data.books):
                 raise HTTPException(
                     status_code=404, detail="One or more books not found"
@@ -57,11 +58,11 @@ class AuthorsCrud:
         for field, value in updated_data.items():
             setattr(author, field, value)
 
-        db.commit()
-        db.refresh(author)
+        self.db.commit()
+        self.db.refresh(author)
         return author
 
-    def remove_author(self, db: Session, author_id: int):
-        author = self.get_author_by_id(db=db, author_id=author_id)
-        db.delete(author)
-        db.commit()
+    def remove_author(self, author_id: int):
+        author = self.get_author_by_id(author_id=author_id)
+        self.db.delete(author)
+        self.db.commit()

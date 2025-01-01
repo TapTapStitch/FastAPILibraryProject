@@ -17,7 +17,5 @@ class Author(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     books = relationship(
-        "Book",
-        secondary=book_author_association,
-        back_populates="authors"
+        "Book", secondary=book_author_association, back_populates="authors"
     )

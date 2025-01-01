@@ -6,12 +6,15 @@ from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
 from ..crud.books import BooksCrud
 
 router = APIRouter()
-crud = BooksCrud()
+
+
+def get_books_crud(db: Session = Depends(get_db)) -> BooksCrud:
+    return BooksCrud(db)
 
 
 @router.get("/", response_model=Page[BookSchema])
-async def get_books(db: Session = Depends(get_db)):
-    return crud.get_books(db)
+async def get_books(crud: BooksCrud = Depends(get_books_crud)):
+    return crud.get_books()
 
 
 @router.get(
@@ -33,8 +36,8 @@ async def get_books(db: Session = Depends(get_db)):
         },
     },
 )
-async def get_book(book_id: int, db: Session = Depends(get_db)):
-    return crud.get_book_by_id(db, book_id=book_id)
+async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
+    return crud.get_book_by_id(book_id=book_id)
 
 
 @router.post(
@@ -58,8 +61,10 @@ async def get_book(book_id: int, db: Session = Depends(get_db)):
         },
     },
 )
-async def create_book_service(book: CreateBookSchema, db: Session = Depends(get_db)):
-    return crud.create_book(db, book_data=book)
+async def create_book_service(
+    book: CreateBookSchema, crud: BooksCrud = Depends(get_books_crud)
+):
+    return crud.create_book(book_data=book)
 
 
 @router.patch(
@@ -92,10 +97,9 @@ async def create_book_service(book: CreateBookSchema, db: Session = Depends(get_
     },
 )
 async def update_book(
-    book_id: int, book: UpdateBookSchema, db: Session = Depends(get_db)
+    book_id: int, book: UpdateBookSchema, crud: BooksCrud = Depends(get_books_crud)
 ):
     return crud.update_book(
-        db,
         book_id=book_id,
         book_data=book,
     )
@@ -120,5 +124,5 @@ async def update_book(
         },
     },
 )
-async def delete_book(book_id: int, db: Session = Depends(get_db)):
-    return crud.remove_book(db, book_id=book_id)
+async def delete_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
+    return crud.remove_book(book_id=book_id)

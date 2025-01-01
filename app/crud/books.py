@@ -8,25 +8,28 @@ from ..schemas.book import CreateBookSchema, UpdateBookSchema
 
 
 class BooksCrud:
-    def get_books(self, db: Session):
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_books(self):
         books = (
-            db.query(Book)
+            self.db.query(Book)
             .options(selectinload(Book.authors))
             .order_by(desc(Book.created_at))
         )
         return paginate(books)
 
-    def get_book_by_id(self, db: Session, book_id: int):
-        book = db.query(Book).filter(Book.id == book_id).first()
+    def get_book_by_id(self, book_id: int):
+        book = self.db.query(Book).filter(Book.id == book_id).first()
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
 
-    def create_book(self, db: Session, book_data: CreateBookSchema):
-        if db.query(Book).filter(Book.isbn == book_data.isbn).first():
+    def create_book(self, book_data: CreateBookSchema):
+        if self.db.query(Book).filter(Book.isbn == book_data.isbn).first():
             raise HTTPException(status_code=400, detail="ISBN must be unique")
 
-        authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+        authors = self.db.query(Author).filter(Author.id.in_(book_data.authors)).all()
 
         if len(authors) != len(book_data.authors):
             raise HTTPException(status_code=404, detail="One or more authors not found")
@@ -38,24 +41,26 @@ class BooksCrud:
             isbn=book_data.isbn,
             authors=authors,
         )
-        db.add(book)
-        db.commit()
-        db.refresh(book)
+        self.db.add(book)
+        self.db.commit()
+        self.db.refresh(book)
         return book
 
-    def update_book(self, db: Session, book_id: int, book_data: UpdateBookSchema):
-        book = self.get_book_by_id(db=db, book_id=book_id)
+    def update_book(self, book_id: int, book_data: UpdateBookSchema):
+        book = self.get_book_by_id(book_id)
         updated_data = book_data.model_dump(exclude_unset=True)
 
         if "isbn" in updated_data and updated_data["isbn"] != book.isbn:
             existing_book = (
-                db.query(Book).filter(Book.isbn == updated_data["isbn"]).first()
+                self.db.query(Book).filter(Book.isbn == updated_data["isbn"]).first()
             )
             if existing_book:
                 raise HTTPException(status_code=400, detail="ISBN must be unique")
 
         if "authors" in updated_data:
-            authors = db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+            authors = (
+                self.db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+            )
             if len(authors) != len(book_data.authors):
                 raise HTTPException(
                     status_code=404, detail="One or more authors not found"
@@ -65,11 +70,11 @@ class BooksCrud:
         for field, value in updated_data.items():
             setattr(book, field, value)
 
-        db.commit()
-        db.refresh(book)
+        self.db.commit()
+        self.db.refresh(book)
         return book
 
-    def remove_book(self, db: Session, book_id: int):
-        book = self.get_book_by_id(db=db, book_id=book_id)
-        db.delete(book)
-        db.commit()
+    def remove_book(self, book_id: int):
+        book = self.get_book_by_id(book_id)
+        self.db.delete(book)
+        self.db.commit()
