@@ -20,25 +20,15 @@ class BooksCrud:
         return paginate(books)
 
     def get_book_by_id(self, book_id: int):
-        book = self.db.execute(
-            select(Book).options(selectinload(Book.authors)).where(Book.id == book_id)
-        ).scalar_one_or_none()
+        book = self._get_book_by_id(book_id)
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
 
     def create_book(self, book_data: CreateBookSchema):
-        if self.db.execute(
-            select(Book).where(Book.isbn == book_data.isbn)
-        ).scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="ISBN must be unique")
+        self._check_isbn_unique(book_data.isbn)
 
-        authors = (
-            self.db.execute(select(Author).where(Author.id.in_(book_data.authors)))
-            .scalars()
-            .all()
-        )
-
+        authors = self._get_authors_by_ids(book_data.authors)
         if len(authors) != len(book_data.authors):
             raise HTTPException(status_code=404, detail="One or more authors not found")
 
@@ -59,18 +49,10 @@ class BooksCrud:
         updated_data = book_data.model_dump(exclude_unset=True)
 
         if "isbn" in updated_data and updated_data["isbn"] != book.isbn:
-            existing_book = self.db.execute(
-                select(Book).where(Book.isbn == updated_data["isbn"])
-            ).scalar_one_or_none()
-            if existing_book:
-                raise HTTPException(status_code=400, detail="ISBN must be unique")
+            self._check_isbn_unique(updated_data["isbn"])
 
         if "authors" in updated_data:
-            authors = (
-                self.db.execute(select(Author).where(Author.id.in_(book_data.authors)))
-                .scalars()
-                .all()
-            )
+            authors = self._get_authors_by_ids(book_data.authors)
             if len(authors) != len(book_data.authors):
                 raise HTTPException(
                     status_code=404, detail="One or more authors not found"
@@ -88,3 +70,19 @@ class BooksCrud:
         book = self.get_book_by_id(book_id)
         self.db.delete(book)
         self.db.commit()
+
+    def _get_book_by_id(self, book_id: int):
+        return self.db.execute(
+            select(Book).options(selectinload(Book.authors)).where(Book.id == book_id)
+        ).scalar_one_or_none()
+
+    def _check_isbn_unique(self, isbn: str):
+        if self.db.execute(select(Book).where(Book.isbn == isbn)).scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="ISBN must be unique")
+
+    def _get_authors_by_ids(self, author_ids: list):
+        return (
+            self.db.execute(select(Author).where(Author.id.in_(author_ids)))
+            .scalars()
+            .all()
+        )

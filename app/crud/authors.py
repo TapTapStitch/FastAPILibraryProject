@@ -20,21 +20,13 @@ class AuthorsCrud:
         return paginate(authors)
 
     def get_author_by_id(self, author_id: int):
-        author = self.db.execute(
-            select(Author)
-            .options(selectinload(Author.books))
-            .where(Author.id == author_id)
-        ).scalar_one_or_none()
+        author = self._get_author_by_id(author_id)
         if not author:
             raise HTTPException(status_code=404, detail="Author not found")
         return author
 
     def create_author(self, author_data: CreateAuthorSchema):
-        books = (
-            self.db.execute(select(Book).where(Book.id.in_(author_data.books)))
-            .scalars()
-            .all()
-        )
+        books = self._get_books_by_ids(author_data.books)
         if len(books) != len(author_data.books):
             raise HTTPException(status_code=404, detail="One or more books not found")
 
@@ -55,11 +47,7 @@ class AuthorsCrud:
         updated_data = author_data.model_dump(exclude_unset=True)
 
         if "books" in updated_data:
-            books = (
-                self.db.execute(select(Book).where(Book.id.in_(author_data.books)))
-                .scalars()
-                .all()
-            )
+            books = self._get_books_by_ids(author_data.books)
             if len(books) != len(author_data.books):
                 raise HTTPException(
                     status_code=404, detail="One or more books not found"
@@ -77,3 +65,15 @@ class AuthorsCrud:
         author = self.get_author_by_id(author_id=author_id)
         self.db.delete(author)
         self.db.commit()
+
+    def _get_author_by_id(self, author_id: int):
+        return self.db.execute(
+            select(Author)
+            .options(selectinload(Author.books))
+            .where(Author.id == author_id)
+        ).scalar_one_or_none()
+
+    def _get_books_by_ids(self, book_ids: list):
+        return (
+            self.db.execute(select(Book).where(Book.id.in_(book_ids))).scalars().all()
+        )
