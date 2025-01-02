@@ -4,10 +4,7 @@ from sqlalchemy import pool
 from alembic import context
 from app.config import Base
 from dotenv import dotenv_values
-
-# Every model that you want to include in the migration
-from app.models.book import Book
-from app.models.author import Author
+from app.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
