@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List
 
@@ -35,8 +35,7 @@ class CreateBookSchema(BaseModel):
     isbn: str = ISBNField
     authors: List[int] | None = []
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class UpdateBookSchema(BaseModel):
@@ -46,5 +45,4 @@ class UpdateBookSchema(BaseModel):
     isbn: str | None = Field(None, min_length=13, max_length=13, pattern=r"^\d{13}$")
     authors: List[int] | None = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")

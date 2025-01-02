@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy.exc import IntegrityError
 from app.models.book import Book
 from app.models.author import Author
@@ -57,8 +58,5 @@ def test_unique_isbn_constraint(session):
         isbn="unique-isbn-123",
     )
     session.add(book2)
-    try:
+    with pytest.raises(IntegrityError):
         session.commit()
-        assert False, "Expected an IntegrityError due to duplicate ISBN"
-    except IntegrityError:
-        session.rollback()

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List
 
@@ -34,8 +34,7 @@ class CreateAuthorSchema(BaseModel):
     biography: str | None = ""
     books: List[int] | None = []
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class UpdateAuthorSchema(BaseModel):
@@ -45,5 +44,4 @@ class UpdateAuthorSchema(BaseModel):
     biography: str | None = None
     books: List[int] | None = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
