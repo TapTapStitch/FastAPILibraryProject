@@ -12,16 +12,15 @@ def engine():
     if not database_url:
         raise ValueError("TEST_DATABASE_URL is not set in the environment variables.")
     engine = create_engine(database_url)
-    Base.metadata.create_all(engine)
     yield engine
-    Base.metadata.drop_all(engine)
     engine.dispose()
 
 
 @pytest.fixture(scope="function")
 def session(engine):
+    Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
     yield session
-    session.rollback()
     session.close()
+    Base.metadata.drop_all(engine)
