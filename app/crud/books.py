@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 from fastapi import HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
 from ..models.book import Book
@@ -20,16 +20,24 @@ class BooksCrud:
         return paginate(books)
 
     def get_book_by_id(self, book_id: int):
-        book = self.db.query(Book).filter(Book.id == book_id).first()
+        book = self.db.execute(
+            select(Book).options(selectinload(Book.authors)).where(Book.id == book_id)
+        ).scalar_one_or_none()
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         return book
 
     def create_book(self, book_data: CreateBookSchema):
-        if self.db.query(Book).filter(Book.isbn == book_data.isbn).first():
+        if self.db.execute(
+            select(Book).where(Book.isbn == book_data.isbn)
+        ).scalar_one_or_none():
             raise HTTPException(status_code=400, detail="ISBN must be unique")
 
-        authors = self.db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+        authors = (
+            self.db.execute(select(Author).where(Author.id.in_(book_data.authors)))
+            .scalars()
+            .all()
+        )
 
         if len(authors) != len(book_data.authors):
             raise HTTPException(status_code=404, detail="One or more authors not found")
@@ -51,15 +59,17 @@ class BooksCrud:
         updated_data = book_data.model_dump(exclude_unset=True)
 
         if "isbn" in updated_data and updated_data["isbn"] != book.isbn:
-            existing_book = (
-                self.db.query(Book).filter(Book.isbn == updated_data["isbn"]).first()
-            )
+            existing_book = self.db.execute(
+                select(Book).where(Book.isbn == updated_data["isbn"])
+            ).scalar_one_or_none()
             if existing_book:
                 raise HTTPException(status_code=400, detail="ISBN must be unique")
 
         if "authors" in updated_data:
             authors = (
-                self.db.query(Author).filter(Author.id.in_(book_data.authors)).all()
+                self.db.execute(select(Author).where(Author.id.in_(book_data.authors)))
+                .scalars()
+                .all()
             )
             if len(authors) != len(book_data.authors):
                 raise HTTPException(

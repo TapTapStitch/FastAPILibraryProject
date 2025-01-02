@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 from fastapi import HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
 from ..models.author import Author
@@ -20,14 +20,21 @@ class AuthorsCrud:
         return paginate(authors)
 
     def get_author_by_id(self, author_id: int):
-        author = self.db.query(Author).filter(Author.id == author_id).first()
+        author = self.db.execute(
+            select(Author)
+            .options(selectinload(Author.books))
+            .where(Author.id == author_id)
+        ).scalar_one_or_none()
         if not author:
             raise HTTPException(status_code=404, detail="Author not found")
         return author
 
     def create_author(self, author_data: CreateAuthorSchema):
-        books = self.db.query(Book).filter(Book.id.in_(author_data.books)).all()
-
+        books = (
+            self.db.execute(select(Book).where(Book.id.in_(author_data.books)))
+            .scalars()
+            .all()
+        )
         if len(books) != len(author_data.books):
             raise HTTPException(status_code=404, detail="One or more books not found")
 
@@ -48,7 +55,11 @@ class AuthorsCrud:
         updated_data = author_data.model_dump(exclude_unset=True)
 
         if "books" in updated_data:
-            books = self.db.query(Book).filter(Book.id.in_(author_data.books)).all()
+            books = (
+                self.db.execute(select(Book).where(Book.id.in_(author_data.books)))
+                .scalars()
+                .all()
+            )
             if len(books) != len(author_data.books):
                 raise HTTPException(
                     status_code=404, detail="One or more books not found"
