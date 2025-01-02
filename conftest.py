@@ -1,9 +1,11 @@
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.config import Base
+from app.config import Base, get_db
 from dotenv import dotenv_values
 from app.models import *  # To ensure all models are imported
+from app.main import app
 
 
 @pytest.fixture(scope="session")
@@ -24,3 +26,11 @@ def session(engine):
     yield session
     session.close()
     Base.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def client(session):
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.pop(get_db)
