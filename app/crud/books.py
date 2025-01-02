@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, select
 from fastapi import HTTPException
-from fastapi_pagination.ext.sqlalchemy import paginate
+from ..services.pagination import paginate
 from ..models.book import Book
 from ..models.author import Author
 from ..schemas.book import CreateBookSchema, UpdateBookSchema
@@ -11,13 +11,13 @@ class BooksCrud:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_books(self):
-        books = (
-            self.db.query(Book)
+    def get_books(self, pagination):
+        stmt = (
+            select(Book)
             .options(selectinload(Book.authors))
             .order_by(desc(Book.created_at))
         )
-        return paginate(books)
+        return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_book_by_id(self, book_id: int):
         book = self._get_book_by_id(book_id)

@@ -6,6 +6,5 @@ sqlalchemy-utils
 psycopg2
 python-dotenv
 alembic
-fastapi-pagination
 pytest
 httpx

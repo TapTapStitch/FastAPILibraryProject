@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
-from fastapi_pagination import Page
 from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
+from ..schemas.pagination import PaginationParams, PaginatedResponse
 from ..crud.books import BooksCrud
 
 router = APIRouter()
@@ -12,9 +12,14 @@ def get_books_crud(db: Session = Depends(get_db)) -> BooksCrud:
     return BooksCrud(db)
 
 
-@router.get("/", response_model=Page[BookSchema])
-async def get_books(crud: BooksCrud = Depends(get_books_crud)):
-    return crud.get_books()
+@router.get(
+    "/",
+    response_model=PaginatedResponse[BookSchema],
+)
+async def get_books(
+    pagination: PaginationParams = Depends(), crud: BooksCrud = Depends(get_books_crud)
+):
+    return crud.get_books(pagination=pagination)
 
 
 @router.get(
