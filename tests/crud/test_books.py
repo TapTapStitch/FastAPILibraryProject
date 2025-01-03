@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from app.crud.books import BooksCrud
 from app.schemas.book import CreateBookSchema, UpdateBookSchema
 from app.models.book import Book
-from app.models.author import Author
 
 
 @pytest.fixture()
@@ -12,21 +11,12 @@ def book_crud(session):
 
 
 @pytest.fixture
-def sample_author(session):
-    author = Author(name="Sample Author")
-    session.add(author)
-    session.commit()
-    return author
-
-
-@pytest.fixture
-def sample_book(session, sample_author):
+def sample_book(session):
     book = Book(
         title="Sample Book",
         description="A sample book description",
         year_of_publication=2023,
         isbn="1234567890123",  # 13-digit ISBN
-        authors=[sample_author],
     )
     session.add(book)
     session.commit()
@@ -34,19 +24,16 @@ def sample_book(session, sample_author):
 
 
 # Positive case: Create a new book
-def test_create_book(book_crud, sample_author):
+def test_create_book(book_crud):
     book_data = CreateBookSchema(
         title="New Book",
         description="A new book description",
         year_of_publication=2023,
         isbn="0987654321098",  # Valid 13-digit ISBN
-        authors=[sample_author.id],
     )
     book = book_crud.create_book(book_data)
     assert book.title == "New Book"
     assert book.isbn == "0987654321098"
-    assert len(book.authors) == 1
-    assert book.authors[0].name == "Sample Author"
 
 
 # Negative case: Create a book with a duplicate ISBN
@@ -56,27 +43,11 @@ def test_create_book_with_duplicate_isbn(book_crud, sample_book):
         description="Another book description",
         year_of_publication=2023,
         isbn=sample_book.isbn,  # Duplicate ISBN
-        authors=[author.id for author in sample_book.authors],
     )
     with pytest.raises(HTTPException) as excinfo:
         book_crud.create_book(book_data)
     assert excinfo.value.status_code == 400
     assert excinfo.value.detail == "ISBN must be unique"
-
-
-# Negative case: Create a book with a non-existent author
-def test_create_book_with_nonexistent_author(book_crud):
-    book_data = CreateBookSchema(
-        title="Another Book",
-        description="Another book description",
-        year_of_publication=2023,
-        isbn="1111111111111",  # Valid 13-digit ISBN
-        authors=[9999],  # Assuming this author ID doesn't exist
-    )
-    with pytest.raises(HTTPException) as excinfo:
-        book_crud.create_book(book_data)
-    assert excinfo.value.status_code == 404
-    assert excinfo.value.detail == "One or more authors not found"
 
 
 # Positive case: Retrieve a book by ID
@@ -108,7 +79,6 @@ def test_update_book_with_duplicate_isbn(book_crud, sample_book, session):
         description="Another description",
         year_of_publication=2023,
         isbn="2222222222222",  # Valid 13-digit ISBN
-        authors=sample_book.authors,
     )
     session.add(another_book)
     session.commit()

@@ -43,21 +43,7 @@ async def get_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_cru
     return crud.get_author_by_id(author_id=author_id)
 
 
-@router.post(
-    "/",
-    response_model=AuthorSchema,
-    status_code=201,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "One or more books not found"}
-                }
-            },
-        },
-    },
-)
+@router.post("/", response_model=AuthorSchema, status_code=201)
 async def create_author_service(
     author: CreateAuthorSchema, crud: AuthorsCrud = Depends(get_authors_crud)
 ):
@@ -76,10 +62,6 @@ async def create_author_service(
                         "author_not_found": {
                             "summary": "Author not found",
                             "value": {"detail": "Author not found"},
-                        },
-                        "books_not_found": {
-                            "summary": "One or more books not found",
-                            "value": {"detail": "One or more books not found"},
                         },
                     }
                 }

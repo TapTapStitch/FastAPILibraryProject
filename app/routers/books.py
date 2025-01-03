@@ -55,15 +55,7 @@ async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
             "content": {
                 "application/json": {"example": {"detail": "ISBN must be unique"}}
             },
-        },
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "One or more authors not found"}
-                }
-            },
-        },
+        }
     },
 )
 async def create_book_service(
@@ -90,11 +82,7 @@ async def create_book_service(
                         "book_not_found": {
                             "summary": "Book not found",
                             "value": {"detail": "Book not found"},
-                        },
-                        "authors_not_found": {
-                            "summary": "One or more authors not found",
-                            "value": {"detail": "One or more authors not found"},
-                        },
+                        }
                     }
                 }
             },
