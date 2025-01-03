@@ -5,6 +5,7 @@ from app.models.book import Book
 from app.schemas.pagination import PaginationParams
 from app.services.pagination import paginate
 
+
 @pytest.fixture()
 def seed_books(session):
     books = [
@@ -33,9 +34,7 @@ def seed_books(session):
 
 def test_paginate(session, seed_books):
     stmt = (
-        select(Book)
-        .options(selectinload(Book.authors))
-        .order_by(desc(Book.created_at))
+        select(Book).options(selectinload(Book.authors)).order_by(desc(Book.created_at))
     )
 
     # Test pagination with page=1 and size=2
