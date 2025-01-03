@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from app.models.book_author import BookAuthor
 from ..config import Base
 
 
@@ -13,3 +15,5 @@ class Author(Base):
     biography = Column(Text)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    books = relationship("Book", secondary="book_author", back_populates="authors")

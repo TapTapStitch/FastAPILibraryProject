@@ -3,22 +3,22 @@ from sqlalchemy import desc, select
 from fastapi import HTTPException
 from ..services.pagination import paginate
 from ..models.book import Book
+from ..models.author import Author
+from ..models.book_author import BookAuthor
 from ..schemas.book import CreateBookSchema, UpdateBookSchema
+from ..schemas.pagination import PaginationParams
 
 
 class BooksCrud:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_books(self, pagination):
+    def get_books(self, pagination: PaginationParams):
         stmt = select(Book).order_by(desc(Book.created_at))
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_book_by_id(self, book_id: int):
-        book = self._get_book_by_id(book_id)
-        if not book:
-            raise HTTPException(status_code=404, detail="Book not found")
-        return book
+        return self._get_book_by_id(book_id)
 
     def create_book(self, book_data: CreateBookSchema):
         self._check_isbn_unique(book_data.isbn)
@@ -35,7 +35,7 @@ class BooksCrud:
         return book
 
     def update_book(self, book_id: int, book_data: UpdateBookSchema):
-        book = self.get_book_by_id(book_id)
+        book = self._get_book_by_id(book_id)
         updated_data = book_data.model_dump(exclude_unset=True)
 
         if "isbn" in updated_data and updated_data["isbn"] != book.isbn:
@@ -49,15 +49,70 @@ class BooksCrud:
         return book
 
     def remove_book(self, book_id: int):
-        book = self.get_book_by_id(book_id)
+        book = self._get_book_by_id(book_id)
         self.db.delete(book)
         self.db.commit()
 
+    def get_authors_of_book(self, book_id: int, pagination: PaginationParams):
+        self._get_book_by_id(book_id)
+
+        stmt = (
+            select(Author)
+            .join(BookAuthor, Author.id == BookAuthor.author_id)
+            .where(BookAuthor.book_id == book_id)
+        )
+        return paginate(self.db, stmt=stmt, pagination=pagination)
+
+    def create_book_author_association(self, book_id: int, author_id: int):
+        self._get_book_by_id(book_id)
+
+        self._check_author_exists(author_id)
+
+        association_exists = self.db.execute(
+            select(BookAuthor)
+            .where(BookAuthor.book_id == book_id)
+            .where(BookAuthor.author_id == author_id)
+        ).scalar_one_or_none()
+        if association_exists:
+            raise HTTPException(
+                status_code=400,
+                detail="Association already exists",
+            )
+
+        book_author = BookAuthor(book_id=book_id, author_id=author_id)
+        self.db.add(book_author)
+        self.db.commit()
+
+    def remove_book_author_association(self, book_id: int, author_id: int):
+        self._get_book_by_id(book_id)
+
+        self._check_author_exists(author_id)
+
+        association = self.db.execute(
+            select(BookAuthor)
+            .where(BookAuthor.book_id == book_id)
+            .where(BookAuthor.author_id == author_id)
+        ).scalar_one_or_none()
+        if not association:
+            raise HTTPException(status_code=404, detail="Association not found")
+
+        self.db.delete(association)
+        self.db.commit()
+
     def _get_book_by_id(self, book_id: int):
-        return self.db.execute(
+        book = self.db.execute(
             select(Book).where(Book.id == book_id)
         ).scalar_one_or_none()
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        return book
 
     def _check_isbn_unique(self, isbn: str):
         if self.db.execute(select(Book).where(Book.isbn == isbn)).scalar_one_or_none():
             raise HTTPException(status_code=400, detail="ISBN must be unique")
+
+    def _check_author_exists(self, author_id: int):
+        if not self.db.execute(
+            select(Author).where(Author.id == author_id)
+        ).scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Author not found")
