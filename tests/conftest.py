@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.config import Base, get_db
 from dotenv import dotenv_values
-from app.models import *  # To ensure all models are imported
 from app.main import app
 
 
