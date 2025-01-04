@@ -69,9 +69,7 @@ class BooksCrud:
         self._check_author_exists(author_id)
 
         association_exists = self.db.execute(
-            select(BookAuthor)
-            .where(BookAuthor.book_id == book_id)
-            .where(BookAuthor.author_id == author_id)
+            select(BookAuthor).filter_by(book_id=1, author_id=1)
         ).scalar_one_or_none()
         if association_exists:
             raise HTTPException(
@@ -89,9 +87,7 @@ class BooksCrud:
         self._check_author_exists(author_id)
 
         association = self.db.execute(
-            select(BookAuthor)
-            .where(BookAuthor.book_id == book_id)
-            .where(BookAuthor.author_id == author_id)
+            select(BookAuthor).filter_by(book_id=1, author_id=1)
         ).scalar_one_or_none()
         if not association:
             raise HTTPException(status_code=404, detail="Association not found")
