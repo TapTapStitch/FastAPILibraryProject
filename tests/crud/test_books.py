@@ -2,7 +2,10 @@ import pytest
 from fastapi import HTTPException
 from app.crud.books import BooksCrud
 from app.schemas.book import CreateBookSchema, UpdateBookSchema
+from app.schemas.pagination import PaginationParams
 from app.models.book import Book
+from app.models.author import Author
+from app.models.book_author import BookAuthor
 
 
 @pytest.fixture()
@@ -21,6 +24,22 @@ def sample_book(session):
     session.add(book)
     session.commit()
     return book
+
+
+@pytest.fixture
+def sample_author(session):
+    author = Author(name="Sample Author")
+    session.add(author)
+    session.commit()
+    return author
+
+
+@pytest.fixture
+def book_author_association(session, sample_book, sample_author):
+    association = BookAuthor(book_id=sample_book.id, author_id=sample_author.id)
+    session.add(association)
+    session.commit()
+    return association
 
 
 # Positive case: Create a new book
@@ -104,3 +123,109 @@ def test_remove_book_not_found(book_crud):
         book_crud.remove_book(999)  # Assuming this ID doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Book not found"
+
+
+# Positive case: Get authors of a book
+def test_get_authors_of_book(book_crud, sample_book, book_author_association):
+    pagination = PaginationParams(page=1, size=10)
+    authors = book_crud.get_authors_of_book(sample_book.id, pagination)
+    assert len(authors.items) == 1
+    assert authors.items[0].name == "Sample Author"
+
+
+# Negative case: Get authors of a non-existent book
+def test_get_authors_of_non_existent_book(book_crud):
+    pagination = PaginationParams(page=1, size=10)
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.get_authors_of_book(
+            999, pagination
+        )  # Assuming book ID 999 doesn't exist
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Positive case: Create book-author association
+def test_create_book_author_association(book_crud, sample_book, sample_author):
+    book_crud.create_book_author_association(sample_book.id, sample_author.id)
+    association = (
+        book_crud.db.query(BookAuthor)
+        .filter_by(book_id=sample_book.id, author_id=sample_author.id)
+        .first()
+    )
+    assert association is not None
+
+
+# Negative case: Create duplicate book-author association
+def test_create_duplicate_book_author_association(book_crud, book_author_association):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_author_association(
+            book_author_association.book_id, book_author_association.author_id
+        )
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail == "Association already exists"
+
+
+# Negative case: Create association for non-existent book
+def test_create_association_non_existent_book(book_crud, sample_author):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_author_association(
+            999, sample_author.id
+        )  # Non-existent book
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Negative case: Create association for non-existent author
+def test_create_association_non_existent_author(book_crud, sample_book):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_author_association(
+            sample_book.id, 999
+        )  # Non-existent author
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Author not found"
+
+
+# Positive case: Remove book-author association
+def test_remove_book_author_association(book_crud, book_author_association):
+    book_crud.remove_book_author_association(
+        book_author_association.book_id, book_author_association.author_id
+    )
+    association = (
+        book_crud.db.query(BookAuthor)
+        .filter_by(
+            book_id=book_author_association.book_id,
+            author_id=book_author_association.author_id,
+        )
+        .first()
+    )
+    assert association is None
+
+
+# Negative case: Remove non-existent book-author association
+def test_remove_non_existent_book_author_association(
+    book_crud, sample_book, sample_author
+):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_author_association(sample_book.id, sample_author.id)
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Association not found"
+
+
+# Negative case: Remove association for non-existent book
+def test_remove_association_non_existent_book(book_crud, sample_author):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_author_association(
+            999, sample_author.id
+        )  # Non-existent book
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Negative case: Remove association for non-existent author
+def test_remove_association_non_existent_author(book_crud, sample_book):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_author_association(
+            sample_book.id, 999
+        )  # Non-existent author
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Author not found"
