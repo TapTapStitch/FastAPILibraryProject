@@ -7,6 +7,4 @@ psycopg2
 python-dotenv
 alembic
 pytest
-pytest-cov
-pytest-randomly
 httpx

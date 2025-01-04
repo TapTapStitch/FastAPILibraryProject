@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy import select, desc
+from sqlalchemy.orm import selectinload
 from app.models.book import Book
 from app.schemas.pagination import PaginationParams
 from app.services.pagination import paginate
@@ -32,7 +33,9 @@ def seed_books(session):
 
 
 def test_paginate(session, seed_books):
-    stmt = select(Book).order_by(desc(Book.created_at))
+    stmt = (
+        select(Book).options(selectinload(Book.authors)).order_by(desc(Book.created_at))
+    )
 
     # Test pagination with page=1 and size=2
     pagination_params = PaginationParams(page=1, size=2)

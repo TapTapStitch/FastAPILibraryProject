@@ -9,4 +9,4 @@ app.include_router(authors.router, prefix="/authors", tags=["authors"])
 
 @app.get("/")
 async def healthcheck():
-    return {"status": "ok"}
+    return {"status": "healthy"}
