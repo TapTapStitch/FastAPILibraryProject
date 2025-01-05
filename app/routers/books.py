@@ -114,7 +114,7 @@ async def delete_book_author_association(
     response_model=PaginatedResponse[GenreSchema],
     responses=not_found_response("book"),
 )
-def get_genres_of_books(
+def get_genres_of_book(
     book_id: int,
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
