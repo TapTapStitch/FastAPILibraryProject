@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from app.models.author import Author
 
 
@@ -11,9 +12,9 @@ def test_create_author(session):
     session.add(new_author)
     session.commit()
 
-    retrieved_author = (
-        session.query(Author).filter_by(name="John", surname="Doe").first()
-    )
+    retrieved_author = session.execute(
+        select(Author).where(Author.name == "John")
+    ).scalar_one_or_none()
     assert retrieved_author is not None
     assert retrieved_author.name == "John"
     assert retrieved_author.surname == "Doe"

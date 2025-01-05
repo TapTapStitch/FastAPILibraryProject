@@ -5,7 +5,9 @@ from app.schemas.book import CreateBookSchema, UpdateBookSchema
 from app.schemas.pagination import PaginationParams
 from app.models.book import Book
 from app.models.author import Author
+from app.models.genre import Genre
 from app.models.book_author import BookAuthor
+from app.models.book_genre import BookGenre
 
 
 @pytest.fixture()
@@ -37,6 +39,22 @@ def sample_author(session):
 @pytest.fixture
 def book_author_association(session, sample_book, sample_author):
     association = BookAuthor(book_id=sample_book.id, author_id=sample_author.id)
+    session.add(association)
+    session.commit()
+    return association
+
+
+@pytest.fixture()
+def sample_genre(session):
+    genre = Genre(name="Fiction", description="Fictional books")
+    session.add(genre)
+    session.commit()
+    return genre
+
+
+@pytest.fixture()
+def sample_book_genre_association(session, sample_book, sample_genre):
+    association = BookGenre(book_id=sample_book.id, genre_id=sample_genre.id)
     session.add(association)
     session.commit()
     return association
@@ -212,7 +230,7 @@ def test_remove_non_existent_book_author_association(
 
 
 # Negative case: Remove association for non-existent book
-def test_remove_association_non_existent_book(book_crud, sample_author):
+def test_remove_book_author_association_non_existent_book(book_crud, sample_author):
     with pytest.raises(HTTPException) as excinfo:
         book_crud.remove_book_author_association(
             999, sample_author.id
@@ -222,10 +240,115 @@ def test_remove_association_non_existent_book(book_crud, sample_author):
 
 
 # Negative case: Remove association for non-existent author
-def test_remove_association_non_existent_author(book_crud, sample_book):
+def test_remove_book_author_association_non_existent_author(book_crud, sample_book):
     with pytest.raises(HTTPException) as excinfo:
         book_crud.remove_book_author_association(
             sample_book.id, 999
         )  # Non-existent author
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Author not found"
+
+
+# Positive case: Get genres of a book
+def test_get_genres_of_book(
+    book_crud, sample_book, sample_genre, sample_book_genre_association
+):
+    pagination = PaginationParams(page=1, size=10)
+    genres = book_crud.get_genres_of_book(sample_book.id, pagination)
+    assert len(genres.items) == 1
+    assert genres.items[0].name == "Fiction"
+
+
+# Negative case: Get genres of a non-existent book
+def test_get_genres_of_non_existent_book(book_crud):
+    pagination = PaginationParams(page=1, size=10)
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.get_genres_of_book(
+            999, pagination
+        )  # Assuming book ID 999 doesn't exist
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Positive case: Create book-genre association
+def test_create_book_genre_association(book_crud, sample_book, sample_genre):
+    book_crud.create_book_genre_association(sample_book.id, sample_genre.id)
+    association = (
+        book_crud.db.query(BookGenre)
+        .filter_by(book_id=sample_book.id, genre_id=sample_genre.id)
+        .first()
+    )
+    assert association is not None
+
+
+# Negative case: Create duplicate book-genre association
+def test_create_duplicate_book_genre_association(
+    book_crud, sample_book, sample_genre, sample_book_genre_association
+):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_genre_association(sample_book.id, sample_genre.id)
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail == "Association already exists"
+
+
+# Negative case: Create association for non-existent book
+def test_create_book_genre_association_non_existent_book(book_crud, sample_genre):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_genre_association(
+            999, sample_genre.id
+        )  # Non-existent book
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Negative case: Create association for non-existent genre
+def test_create_association_non_existent_genre(book_crud, sample_book):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.create_book_genre_association(
+            sample_book.id, 999
+        )  # Non-existent genre
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Genre not found"
+
+
+# Positive case: Remove book-genre association
+def test_remove_book_genre_association(
+    book_crud, sample_book, sample_genre, sample_book_genre_association
+):
+    book_crud.remove_book_genre_association(sample_book.id, sample_genre.id)
+    association = (
+        book_crud.db.query(BookGenre)
+        .filter_by(book_id=sample_book.id, genre_id=sample_genre.id)
+        .first()
+    )
+    assert association is None
+
+
+# Negative case: Remove non-existent book-genre association
+def test_remove_non_existent_book_genre_association(
+    book_crud, sample_book, sample_genre
+):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_genre_association(sample_book.id, sample_genre.id)
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Association not found"
+
+
+# Negative case: Remove association for non-existent book
+def test_remove_book_genre_association_non_existent_book(book_crud, sample_genre):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_genre_association(
+            999, sample_genre.id
+        )  # Non-existent book
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Book not found"
+
+
+# Negative case: Remove association for non-existent genre
+def test_remove_book_genre_association_non_existent_genre(book_crud, sample_book):
+    with pytest.raises(HTTPException) as excinfo:
+        book_crud.remove_book_genre_association(
+            sample_book.id, 999
+        )  # Non-existent genre
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Genre not found"

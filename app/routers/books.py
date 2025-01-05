@@ -3,8 +3,14 @@ from ..config import get_db
 from sqlalchemy.orm import Session
 from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
 from ..schemas.author import AuthorSchema
+from ..schemas.genre import GenreSchema
 from ..schemas.pagination import PaginationParams, PaginatedResponse
 from ..crud.books import BooksCrud
+from ..services.response_templates import (
+    not_found_response,
+    bad_request_response,
+    combine_responses,
+)
 
 router = APIRouter()
 
@@ -13,10 +19,7 @@ def get_books_crud(db: Session = Depends(get_db)) -> BooksCrud:
     return BooksCrud(db)
 
 
-@router.get(
-    "/",
-    response_model=PaginatedResponse[BookSchema],
-)
+@router.get("/", response_model=PaginatedResponse[BookSchema])
 async def get_books(
     pagination: PaginationParams = Depends(), crud: BooksCrud = Depends(get_books_crud)
 ):
@@ -24,23 +27,7 @@ async def get_books(
 
 
 @router.get(
-    "/{book_id}",
-    response_model=BookSchema,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    "/{book_id}", response_model=BookSchema, responses=not_found_response("book")
 )
 async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
     return crud.get_book_by_id(book_id=book_id)
@@ -50,16 +37,9 @@ async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
     "/",
     response_model=BookSchema,
     status_code=201,
-    responses={
-        400: {
-            "description": "Bad Request",
-            "content": {
-                "application/json": {"example": {"detail": "ISBN must be unique"}}
-            },
-        }
-    },
+    responses=bad_request_response("ISBN must be unique"),
 )
-async def create_book_service(
+async def create_book(
     book: CreateBookSchema, crud: BooksCrud = Depends(get_books_crud)
 ):
     return crud.create_book(book_data=book)
@@ -68,56 +48,17 @@ async def create_book_service(
 @router.patch(
     "/{book_id}",
     response_model=BookSchema,
-    responses={
-        400: {
-            "description": "Bad Request",
-            "content": {
-                "application/json": {"example": {"detail": "ISBN must be unique"}}
-            },
-        },
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        bad_request_response("ISBN must be unique"), not_found_response("book")
+    ),
 )
 async def update_book(
     book_id: int, book: UpdateBookSchema, crud: BooksCrud = Depends(get_books_crud)
 ):
-    return crud.update_book(
-        book_id=book_id,
-        book_data=book,
-    )
+    return crud.update_book(book_id=book_id, book_data=book)
 
 
-@router.delete(
-    "/{book_id}",
-    status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
-)
+@router.delete("/{book_id}", status_code=204, responses=not_found_response("book"))
 async def delete_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
     crud.remove_book(book_id=book_id)
     return Response(status_code=204)
@@ -126,21 +67,7 @@ async def delete_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
 @router.get(
     "/{book_id}/authors",
     response_model=PaginatedResponse[AuthorSchema],
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=not_found_response("book"),
 )
 def get_authors_of_book(
     book_id: int,
@@ -153,38 +80,11 @@ def get_authors_of_book(
 @router.post(
     "/{book_id}/authors/{author_id}",
     status_code=201,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        },
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Bad Request",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "association_exists": {
-                            "summary": "Association exists",
-                            "value": {"detail": "Association already exists"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("book"),
+        not_found_response("author"),
+        bad_request_response("Association already exists"),
+    ),
 )
 def create_book_author_association(
     book_id: int, author_id: int, crud: BooksCrud = Depends(get_books_crud)
@@ -196,32 +96,59 @@ def create_book_author_association(
 @router.delete(
     "/{book_id}/authors/{author_id}",
     status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        },
-                        "association_not_found": {
-                            "summary": "Association not found",
-                            "value": {"detail": "Association not found"},
-                        },
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("book"),
+        not_found_response("author"),
+        not_found_response("association"),
+    ),
 )
 async def delete_book_author_association(
     book_id: int, author_id: int, crud: BooksCrud = Depends(get_books_crud)
 ):
     crud.remove_book_author_association(book_id=book_id, author_id=author_id)
+    return Response(status_code=204)
+
+
+@router.get(
+    "/{book_id}/genres",
+    response_model=PaginatedResponse[GenreSchema],
+    responses=not_found_response("book"),
+)
+def get_genres_of_books(
+    book_id: int,
+    pagination: PaginationParams = Depends(),
+    crud: BooksCrud = Depends(get_books_crud),
+):
+    return crud.get_genres_of_book(book_id=book_id, pagination=pagination)
+
+
+@router.post(
+    "/{book_id}/genres/{genre_id}",
+    status_code=201,
+    responses=combine_responses(
+        not_found_response("book"),
+        not_found_response("genre"),
+        bad_request_response("Association already exists"),
+    ),
+)
+def create_book_genre_association(
+    book_id: int, genre_id: int, crud: BooksCrud = Depends(get_books_crud)
+):
+    crud.create_book_genre_association(book_id=book_id, genre_id=genre_id)
+    return Response(status_code=201)
+
+
+@router.delete(
+    "/{book_id}/genres/{genre_id}",
+    status_code=204,
+    responses=combine_responses(
+        not_found_response("book"),
+        not_found_response("genre"),
+        not_found_response("association"),
+    ),
+)
+async def delete_book_genre_association(
+    book_id: int, genre_id: int, crud: BooksCrud = Depends(get_books_crud)
+):
+    crud.remove_book_genre_association(book_id=book_id, genre_id=genre_id)
     return Response(status_code=204)

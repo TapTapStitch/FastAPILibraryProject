@@ -38,6 +38,25 @@ def associate_book_and_author(client, create_sample_book, create_sample_author):
     return {"book_id": book_id, "author_id": author_id}
 
 
+@pytest.fixture
+def create_sample_genre(client):
+    genre_data = {
+        "name": "Fiction",
+    }
+    response = client.post("/genres/", json=genre_data)
+    assert response.status_code == status.HTTP_201_CREATED
+    return response.json()
+
+
+@pytest.fixture
+def associate_book_and_genre(client, create_sample_book, create_sample_genre):
+    book_id = create_sample_book["id"]
+    genre_id = create_sample_genre["id"]
+    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    assert response.status_code == status.HTTP_201_CREATED
+    return {"book_id": book_id, "genre_id": genre_id}
+
+
 # Test for fetching all books
 def test_get_books(client):
     response = client.get("/books/")
@@ -168,7 +187,7 @@ def test_create_duplicate_book_author_association(client, associate_book_and_aut
 
 
 # Test for creating an association with a non-existent book
-def test_create_association_nonexistent_book(client, create_sample_author):
+def test_create_book_author_association_nonexistent_book(client, create_sample_author):
     author_id = create_sample_author["id"]
     response = client.post(f"/books/999999/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -176,7 +195,7 @@ def test_create_association_nonexistent_book(client, create_sample_author):
 
 
 # Test for creating an association with a non-existent author
-def test_create_association_nonexistent_author(client, create_sample_book):
+def test_create_book_author_association_nonexistent_author(client, create_sample_book):
     book_id = create_sample_book["id"]
     response = client.post(f"/books/{book_id}/authors/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -208,7 +227,7 @@ def test_delete_nonexistent_book_author_association(
 
 
 # Test for deleting an association with a non-existent book
-def test_delete_association_nonexistent_book(client, create_sample_author):
+def test_delete_book_author_association_nonexistent_book(client, create_sample_author):
     author_id = create_sample_author["id"]
     response = client.delete(f"/books/999999/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -216,8 +235,104 @@ def test_delete_association_nonexistent_book(client, create_sample_author):
 
 
 # Test for deleting an association with a non-existent author
-def test_delete_association_nonexistent_author(client, create_sample_book):
+def test_delete_book_author_association_nonexistent_author(client, create_sample_book):
     book_id = create_sample_book["id"]
     response = client.delete(f"/books/{book_id}/authors/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Author not found"}
+
+
+# Test for getting genres of a book
+def test_get_genres_of_book(client, associate_book_and_genre):
+    book_id = associate_book_and_genre["book_id"]
+    response = client.get(f"/books/{book_id}/genres")
+    assert response.status_code == status.HTTP_200_OK
+    genres = response.json()["items"]
+    assert isinstance(genres, list)
+    assert len(genres) > 0
+    assert genres[0]["name"] == "Fiction"
+
+
+# Test for getting genres of a non-existent book
+def test_get_genres_of_nonexistent_book(client):
+    response = client.get("/books/999999/genres")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Book not found"}
+
+
+# Test for creating a book-genre association
+def test_create_book_genre_association(client, create_sample_book, create_sample_genre):
+    book_id = create_sample_book["id"]
+    genre_id = create_sample_genre["id"]
+    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # Verify the association exists
+    response = client.get(f"/books/{book_id}/genres")
+    genres = response.json()["items"]
+    assert any(genre["id"] == genre_id for genre in genres)
+
+
+# Test for creating a duplicate book-genre association
+def test_create_duplicate_book_genre_association(client, associate_book_and_genre):
+    book_id = associate_book_and_genre["book_id"]
+    genre_id = associate_book_and_genre["genre_id"]
+    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {"detail": "Association already exists"}
+
+
+# Test for creating an association with a non-existent book
+def test_create_book_genre_association_nonexistent_book(client, create_sample_genre):
+    genre_id = create_sample_genre["id"]
+    response = client.post(f"/books/999999/genres/{genre_id}")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Book not found"}
+
+
+# Test for creating an association with a non-existent genre
+def test_create_book_genre_association_nonexistent_genre(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    response = client.post(f"/books/{book_id}/genres/999999")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Genre not found"}
+
+
+# Test for deleting a book-genre association
+def test_delete_book_genre_association(client, associate_book_and_genre):
+    book_id = associate_book_and_genre["book_id"]
+    genre_id = associate_book_and_genre["genre_id"]
+    response = client.delete(f"/books/{book_id}/genres/{genre_id}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Verify the association is removed
+    response = client.get(f"/books/{book_id}/genres")
+    genres = response.json()["items"]
+    assert not any(genre["id"] == genre_id for genre in genres)
+
+
+# Test for deleting a non-existent book-genre association
+def test_delete_nonexistent_book_genre_association(
+    client, create_sample_book, create_sample_genre
+):
+    book_id = create_sample_book["id"]
+    genre_id = create_sample_genre["id"]
+    response = client.delete(f"/books/{book_id}/genres/{genre_id}")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Association not found"}
+
+
+# Test for deleting an association with a non-existent book
+def test_delete_book_genre_association_nonexistent_book(client, create_sample_genre):
+    genre_id = create_sample_genre["id"]
+    response = client.delete(f"/books/999999/genres/{genre_id}")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Book not found"}
+
+
+# Test for deleting an association with a non-existent genre
+def test_delete_book_genre_association_nonexistent_genre(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    response = client.delete(f"/books/{book_id}/genres/999999")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Genre not found"}
