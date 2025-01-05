@@ -21,10 +21,7 @@ class GenresCrud:
         return self._fetch_genre_by_id(genre_id)
 
     def create_genre(self, genre_data: CreateGenreSchema):
-        genre = Genre(
-            name=genre_data.name,
-            description=genre_data.description
-        )
+        genre = Genre(name=genre_data.name, description=genre_data.description)
         self.db.add(genre)
         self.db.commit()
         self.db.refresh(genre)
