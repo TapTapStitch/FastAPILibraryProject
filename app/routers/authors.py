@@ -5,6 +5,11 @@ from ..schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchem
 from ..schemas.book import BookSchema
 from ..schemas.pagination import PaginationParams, PaginatedResponse
 from ..crud.authors import AuthorsCrud
+from ..services.response_templates import (
+    not_found_response,
+    bad_request_response,
+    combine_responses,
+)
 
 router = APIRouter()
 
@@ -22,23 +27,7 @@ async def get_authors(
 
 
 @router.get(
-    "/{author_id}",
-    response_model=AuthorSchema,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    "/{author_id}", response_model=AuthorSchema, responses=not_found_response("author")
 )
 async def get_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_crud)):
     return crud.get_author_by_id(author_id=author_id)
@@ -52,76 +41,26 @@ async def create_author(
 
 
 @router.patch(
-    "/{author_id}",
-    response_model=AuthorSchema,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        },
-                    }
-                }
-            },
-        },
-    },
+    "/{author_id}", response_model=AuthorSchema, responses=not_found_response("author")
 )
 async def update_author(
     author_id: int,
     author: UpdateAuthorSchema,
     crud: AuthorsCrud = Depends(get_authors_crud),
 ):
-    return crud.update_author(
-        author_id=author_id,
-        author_data=author,
-    )
+    return crud.update_author(author_id=author_id, author_data=author)
 
 
-@router.delete(
-    "/{author_id}",
-    status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
-)
+@router.delete("/{author_id}", status_code=204, responses=not_found_response("author"))
 async def delete_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_crud)):
-    return crud.remove_author(author_id=author_id)
+    crud.remove_author(author_id=author_id)
+    return Response(status_code=204)
 
 
 @router.get(
     "/{author_id}/books",
     response_model=PaginatedResponse[BookSchema],
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=not_found_response("author"),
 )
 def get_books_of_author(
     author_id: int,
@@ -134,38 +73,11 @@ def get_books_of_author(
 @router.post(
     "/{author_id}/books/{book_id}",
     status_code=201,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        },
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Bad Request",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "association_exists": {
-                            "summary": "Association exists",
-                            "value": {"detail": "Association already exists"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("author"),
+        not_found_response("book"),
+        bad_request_response("Association already exists"),
+    ),
 )
 def create_author_book_association(
     author_id: int, book_id: int, crud: AuthorsCrud = Depends(get_authors_crud)
@@ -177,29 +89,11 @@ def create_author_book_association(
 @router.delete(
     "/{author_id}/books/{book_id}",
     status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "author_not_found": {
-                            "summary": "Author not found",
-                            "value": {"detail": "Author not found"},
-                        },
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                        "association_not_found": {
-                            "summary": "Association not found",
-                            "value": {"detail": "Association not found"},
-                        },
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("author"),
+        not_found_response("book"),
+        not_found_response("association"),
+    ),
 )
 async def delete_author_book_association(
     author_id: int, book_id: int, crud: AuthorsCrud = Depends(get_authors_crud)

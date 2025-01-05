@@ -5,6 +5,11 @@ from ..schemas.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
 from ..schemas.book import BookSchema
 from ..schemas.pagination import PaginationParams, PaginatedResponse
 from ..crud.genres import GenresCrud
+from ..services.response_templates import (
+    not_found_response,
+    bad_request_response,
+    combine_responses,
+)
 
 router = APIRouter()
 
@@ -22,23 +27,7 @@ async def get_genres(
 
 
 @router.get(
-    "/{genre_id}",
-    response_model=GenreSchema,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    "/{genre_id}", response_model=GenreSchema, responses=not_found_response("genre")
 )
 async def get_genre(genre_id: int, crud: GenresCrud = Depends(get_genres_crud)):
     return crud.get_genre_by_id(genre_id=genre_id)
@@ -52,76 +41,24 @@ async def create_genre(
 
 
 @router.patch(
-    "/{genre_id}",
-    response_model=GenreSchema,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        },
-                    }
-                }
-            },
-        },
-    },
+    "/{genre_id}", response_model=GenreSchema, responses=not_found_response("genre")
 )
 async def update_genre(
-    genre_id: int,
-    genre: UpdateGenreSchema,
-    crud: GenresCrud = Depends(get_genres_crud),
+    genre_id: int, genre: UpdateGenreSchema, crud: GenresCrud = Depends(get_genres_crud)
 ):
-    return crud.update_genre(
-        genre_id=genre_id,
-        genre_data=genre,
-    )
+    return crud.update_genre(genre_id=genre_id, genre_data=genre)
 
 
-@router.delete(
-    "/{genre_id}",
-    status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
-)
+@router.delete("/{genre_id}", status_code=204, responses=not_found_response("genre"))
 async def delete_genre(genre_id: int, crud: GenresCrud = Depends(get_genres_crud)):
-    return crud.remove_genre(genre_id=genre_id)
+    crud.remove_genre(genre_id=genre_id)
+    return Response(status_code=204)
 
 
 @router.get(
     "/{genre_id}/books",
     response_model=PaginatedResponse[BookSchema],
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=not_found_response("genre"),
 )
 def get_books_of_genre(
     genre_id: int,
@@ -134,38 +71,11 @@ def get_books_of_genre(
 @router.post(
     "/{genre_id}/books/{book_id}",
     status_code=201,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        },
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Bad Request",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "association_exists": {
-                            "summary": "Association exists",
-                            "value": {"detail": "Association already exists"},
-                        }
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("genre"),
+        not_found_response("book"),
+        bad_request_response("Association already exists"),
+    ),
 )
 def create_genre_book_association(
     genre_id: int, book_id: int, crud: GenresCrud = Depends(get_genres_crud)
@@ -177,29 +87,11 @@ def create_genre_book_association(
 @router.delete(
     "/{genre_id}/books/{book_id}",
     status_code=204,
-    responses={
-        404: {
-            "description": "Not Found",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "genre_not_found": {
-                            "summary": "Genre not found",
-                            "value": {"detail": "Genre not found"},
-                        },
-                        "book_not_found": {
-                            "summary": "Book not found",
-                            "value": {"detail": "Book not found"},
-                        },
-                        "association_not_found": {
-                            "summary": "Association not found",
-                            "value": {"detail": "Association not found"},
-                        },
-                    }
-                }
-            },
-        },
-    },
+    responses=combine_responses(
+        not_found_response("genre"),
+        not_found_response("book"),
+        not_found_response("association"),
+    ),
 )
 async def delete_genre_book_association(
     genre_id: int, book_id: int, crud: GenresCrud = Depends(get_genres_crud)
