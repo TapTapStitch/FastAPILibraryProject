@@ -17,7 +17,7 @@ class CreateGenreSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class UpdateBookSchema(BaseModel):
+class UpdateGenreSchema(BaseModel):
     name: str | None = None
     description: str | None = None
 
