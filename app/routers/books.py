@@ -59,7 +59,7 @@ async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
         }
     },
 )
-async def create_book_service(
+async def create_book(
     book: CreateBookSchema, crud: BooksCrud = Depends(get_books_crud)
 ):
     return crud.create_book(book_data=book)

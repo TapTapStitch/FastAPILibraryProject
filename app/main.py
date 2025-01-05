@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from .routers import books, authors
+from .routers import books, authors, genres
 
 app = FastAPI(debug=True)
 
 app.include_router(books.router, prefix="/books", tags=["books"])
 app.include_router(authors.router, prefix="/authors", tags=["authors"])
+app.include_router(genres.router, prefix="/genres", tags=["genres"])
 
 
 @app.get("/health")
