@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.models.book import Book
 
@@ -13,7 +14,8 @@ def test_create_book(session):
     session.add(new_book)
     session.commit()
 
-    retrieved_book = session.query(Book).filter_by(title="The Great Adventure").first()
+    stmt = select(Book).where(Book.title == "The Great Adventure")
+    retrieved_book = session.execute(stmt).scalar_one_or_none()
     assert retrieved_book is not None
     assert retrieved_book.title == "The Great Adventure"
     assert retrieved_book.description == "An epic journey across the world."
