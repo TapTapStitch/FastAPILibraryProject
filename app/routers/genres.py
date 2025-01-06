@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Response
-from ..config import get_db
 from sqlalchemy.orm import Session
+from ..config import get_db
 from ..schemas.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
 from ..schemas.book import BookSchema
 from ..schemas.pagination import PaginationParams, PaginatedResponse
 from ..crud.genres import GenresCrud
-from ..services.response_templates import (
+from .shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,

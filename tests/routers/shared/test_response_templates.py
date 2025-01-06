@@ -1,4 +1,4 @@
-from app.services.response_templates import (
+from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,
