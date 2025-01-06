@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from .models import * # Preload models and their dependencies
+from .models import *  # Preload models and their dependencies
 from .routers import books, authors, genres
 
 app = FastAPI(debug=True)

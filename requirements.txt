@@ -1,11 +1,6 @@
 fastapi[standard]
-black
 sqlalchemy
 sqlalchemy-utils
 psycopg2
 python-dotenv
 alembic
-pytest
-pytest-cov
-pytest-randomly
-httpx

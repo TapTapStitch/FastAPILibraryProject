@@ -1,0 +1,6 @@
+-r requirements.txt
+black
+pytest
+pytest-cov
+pytest-randomly
+httpx
