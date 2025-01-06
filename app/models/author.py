@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from app.models.book_author import BookAuthor
 from ..config import Base
 
 
