@@ -1,12 +1,16 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, select
-from fastapi import HTTPException
 from ..services.pagination import paginate
 from ..models.genre import Genre
 from ..models.book import Book
 from ..models.book_genre import BookGenre
 from ..schemas.genre import CreateGenreSchema, UpdateGenreSchema
 from ..schemas.pagination import PaginationParams
+from .shared.db_utils import (
+    fetch_by_id,
+    ensure_association_does_not_exist,
+    fetch_association,
+)
 
 
 class GenresCrud:
@@ -18,7 +22,7 @@ class GenresCrud:
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_genre_by_id(self, genre_id: int):
-        return self._fetch_by_id(Genre, genre_id, "Genre not found")
+        return fetch_by_id(self.db, Genre, genre_id, "Genre not found")
 
     def create_genre(self, genre_data: CreateGenreSchema):
         genre = Genre(**genre_data.model_dump())
@@ -54,38 +58,22 @@ class GenresCrud:
 
     def create_genre_book_association(self, genre_id: int, book_id: int):
         self.get_genre_by_id(genre_id)
-        self._fetch_by_id(Book, book_id, "Book not found")
-        self._ensure_association_does_not_exist(
-            BookGenre, genre_id=genre_id, book_id=book_id
+        fetch_by_id(self.db, Book, book_id, "Book not found")
+        ensure_association_does_not_exist(
+            self.db, BookGenre, genre_id=genre_id, book_id=book_id
         )
         self.db.add(BookGenre(genre_id=genre_id, book_id=book_id))
         self.db.commit()
 
     def remove_genre_book_association(self, genre_id: int, book_id: int):
         self.get_genre_by_id(genre_id)
-        self._fetch_by_id(Book, book_id, "Book not found")
-        association = self._fetch_association(
-            BookGenre, "Association not found", genre_id=genre_id, book_id=book_id
+        fetch_by_id(self.db, Book, book_id, "Book not found")
+        association = fetch_association(
+            self.db,
+            BookGenre,
+            "Association not found",
+            genre_id=genre_id,
+            book_id=book_id,
         )
         self.db.delete(association)
         self.db.commit()
-
-    def _fetch_by_id(self, model, item_id, not_found_message):
-        item = self.db.execute(
-            select(model).where(model.id == item_id)
-        ).scalar_one_or_none()
-        if not item:
-            raise HTTPException(status_code=404, detail=not_found_message)
-        return item
-
-    def _ensure_association_does_not_exist(self, model, **kwargs):
-        if self.db.execute(select(model).filter_by(**kwargs)).scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Association already exists")
-
-    def _fetch_association(self, model, not_found_message, **kwargs):
-        association = self.db.execute(
-            select(model).filter_by(**kwargs)
-        ).scalar_one_or_none()
-        if not association:
-            raise HTTPException(status_code=404, detail=not_found_message)
-        return association
