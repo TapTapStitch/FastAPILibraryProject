@@ -26,12 +26,12 @@ class UsersCrud:
 
     def update(self, user_id: int, user_data: UpdateUserSchema):
         user = fetch_by_id(self.db, User, user_id, "User not found")
-        if user_data.email and user_data.email != user.email:
+        user_params = user_data.model_dump(exclude_unset=True)
+        if "email" in user_params and user_data.email != user.email:
             ensure_unique(
                 self.db, User, "email", user_data.email, "Email already in use"
             )
-        user_params = user_data.model_dump(exclude_unset=True)
-        if user_params.get("password"):
+        if "password" in user_params:
             user_params["hashed_password"] = self._get_password_hash(
                 user_params.pop("password")
             )
