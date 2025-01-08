@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy.orm import Session
-from ..config import get_db
 from ..schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
 from ..schemas.author import AuthorSchema
 from ..schemas.genre import GenreSchema
@@ -11,12 +9,9 @@ from .shared.response_templates import (
     bad_request_response,
     combine_responses,
 )
+from .shared.depends import get_books_crud
 
 router = APIRouter()
-
-
-def get_books_crud(db: Session = Depends(get_db)) -> BooksCrud:
-    return BooksCrud(db)
 
 
 @router.get("/", response_model=PaginatedResponse[BookSchema])

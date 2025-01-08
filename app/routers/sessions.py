@@ -1,15 +1,9 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from ..config import get_db
 from ..crud.users import UsersCrud
 from ..schemas.user import UserSchema, SignUpSchema, SignInSchema, UpdateUserSchema
-
+from .shared.depends import get_users_crud
 
 router = APIRouter()
-
-
-def get_users_crud(db: Session = Depends(get_db)) -> UsersCrud:
-    return UsersCrud(db)
 
 
 @router.post("/sign-up", response_model=UserSchema, status_code=201)

@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy.orm import Session
-from ..config import get_db
 from ..schemas.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
 from ..schemas.book import BookSchema
 from ..schemas.pagination import PaginationParams, PaginatedResponse
@@ -10,12 +8,9 @@ from .shared.response_templates import (
     bad_request_response,
     combine_responses,
 )
+from .shared.depends import get_genres_crud
 
 router = APIRouter()
-
-
-def get_genres_crud(db: Session = Depends(get_db)) -> GenresCrud:
-    return GenresCrud(db)
 
 
 @router.get("/", response_model=PaginatedResponse[GenreSchema])
