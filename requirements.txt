@@ -2,7 +2,7 @@ fastapi[standard]
 sqlalchemy
 sqlalchemy-utils
 psycopg2
-python-dotenv
 alembic
 pyjwt
 passlib[bcrypt]
+pydantic_settings

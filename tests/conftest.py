@@ -3,14 +3,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.config import Base, get_db
-from dotenv import dotenv_values
+from app.config import settings
 from app.models import *
 from app.main import app
 
 
 @pytest.fixture(scope="session")
 def engine():
-    database_url = dotenv_values(".env").get("TEST_DATABASE_URL")
+    database_url = settings.TEST_DATABASE_URL
     if not database_url:
         raise ValueError("TEST_DATABASE_URL is not set in the environment variables.")
     engine = create_engine(database_url)
