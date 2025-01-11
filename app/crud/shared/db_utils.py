@@ -12,6 +12,15 @@ def fetch_by_id(db_session: Session, model, item_id, not_found_message):
     return item
 
 
+def fetch_by_attr(db_session: Session, model, attr, value, not_found_message):
+    item = db_session.execute(
+        select(model).where(getattr(model, attr) == value)
+    ).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail=not_found_message)
+    return item
+
+
 def ensure_unique(db_session: Session, model, field, value, error_message):
     if db_session.execute(
         select(model).where(getattr(model, field) == value)
