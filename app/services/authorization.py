@@ -1,7 +1,7 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.config import settings
 from ..schemas.token import Token
 
@@ -29,6 +29,6 @@ def decode_jwt_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-def get_current_user_id(auth: str = Depends(auth_bearer)):
+def get_current_user_id(auth: HTTPAuthorizationCredentials = Depends(auth_bearer)):
     token = auth.credentials
     return int(decode_jwt_token(token)["sub"])
