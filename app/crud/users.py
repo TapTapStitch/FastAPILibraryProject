@@ -11,16 +11,13 @@ class UsersCrud:
         self.db = db
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    def get_user(self, user_data: SignInSchema):
+    def sign_in_user(self, user_data: SignInSchema):
         user = fetch_by_attr(self.db, User, "email", user_data.email, "User not found")
         if not self._verify_password(user_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Invalid password")
         return user
 
-    def get_user_by_id(self, user_id: int):
-        return fetch_by_id(self.db, User, user_id, "User not found")
-
-    def create_user(self, user_data: SignUpSchema):
+    def sign_up_user(self, user_data: SignUpSchema):
         ensure_unique(self.db, User, "email", user_data.email, "Email already in use")
         user_params = user_data.model_dump()
         user_params["hashed_password"] = self._get_password_hash(
@@ -32,8 +29,7 @@ class UsersCrud:
         self.db.refresh(user)
         return user
 
-    def update_user(self, user_id: int, user_data: UpdateUserSchema):
-        user = fetch_by_id(self.db, User, user_id, "User not found")
+    def update_user(self, user: User, user_data: UpdateUserSchema):
         user_params = user_data.model_dump(exclude_unset=True)
         if "email" in user_params and user_data.email != user.email:
             ensure_unique(
@@ -49,8 +45,7 @@ class UsersCrud:
         self.db.refresh(user)
         return user
 
-    def remove_user(self, user_id: int):
-        user = fetch_by_id(self.db, User, user_id, "User not found")
+    def remove_user(self, user: User):
         self.db.delete(user)
         self.db.commit()
 

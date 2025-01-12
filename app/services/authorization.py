@@ -2,8 +2,11 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import select
 from app.config import settings
 from ..schemas.token import Token
+from app.config import get_db
+from ..models.user import User
 
 
 auth_bearer = HTTPBearer()
@@ -29,6 +32,15 @@ def decode_jwt_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-def get_current_user_id(auth: HTTPAuthorizationCredentials = Depends(auth_bearer)):
+def get_current_user(
+    auth: HTTPAuthorizationCredentials = Depends(auth_bearer),
+    db=Depends(get_db),
+):
     token = auth.credentials
-    return int(decode_jwt_token(token)["sub"])
+    user_id = int(decode_jwt_token(token)["sub"])
+    user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=401, detail="Token pointing to non-existent user"
+        )
+    return user

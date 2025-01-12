@@ -25,19 +25,14 @@ def bad_request_response(detail: str):
     }
 
 
-def not_authenticated_response():
+def invalid_authentication_responses():
     return {
         "403": {
             "description": "Forbidden",
             "content": {
                 "application/json": {"example": {"detail": "Not authenticated"}}
             },
-        }
-    }
-
-
-def invalid_token_responses():
-    return {
+        },
         "401": {
             "description": "Unauthorized",
             "content": {
@@ -51,10 +46,14 @@ def invalid_token_responses():
                             "summary": "Invalid token",
                             "value": {"detail": "Invalid token"},
                         },
+                        "non_existent_user": {
+                            "summary": "Token pointing to non-existent user",
+                            "value": {"detail": "Token pointing to non-existent user"},
+                        },
                     }
                 }
             },
-        }
+        },
     }
 
 

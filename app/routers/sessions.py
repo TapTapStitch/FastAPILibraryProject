@@ -2,12 +2,11 @@ from fastapi import APIRouter, Depends, Response
 from ..crud.users import UsersCrud
 from ..schemas.user import UserSchema, SignUpSchema, SignInSchema, UpdateUserSchema
 from .shared.depends import get_users_crud
-from ..services.authorization import create_jwt_token, get_current_user_id
+from ..services.authorization import create_jwt_token, get_current_user
 from ..schemas.token import Token
 from .shared.response_templates import (
     bad_request_response,
-    not_authenticated_response,
-    invalid_token_responses,
+    invalid_authentication_responses,
     invalid_password_response,
     not_found_response,
     combine_responses,
@@ -20,7 +19,7 @@ router = APIRouter()
     "/sign_up", status_code=201, responses=bad_request_response("Email already in use")
 )
 async def sign_up(user_data: SignUpSchema, crud: UsersCrud = Depends(get_users_crud)):
-    crud.create_user(user_data)
+    crud.sign_up_user(user_data)
     return Response(status_code=201)
 
 
@@ -36,56 +35,41 @@ async def sign_in(
     user_data: SignInSchema,
     crud: UsersCrud = Depends(get_users_crud),
 ):
-    user = crud.get_user(user_data)
+    user = crud.sign_in_user(user_data)
     return create_jwt_token(user.id)
 
 
 @router.get(
     "/current_user",
     response_model=UserSchema,
-    responses=combine_responses(
-        not_authenticated_response(),
-        invalid_token_responses(),
-        not_found_response("User"),
-    ),
+    responses=invalid_authentication_responses(),
 )
-async def show_current_user(
-    user_id: int = Depends(get_current_user_id),
-    crud: UsersCrud = Depends(get_users_crud),
-):
-    return crud.get_user_by_id(user_id)
+async def show_current_user(current_user=Depends(get_current_user)):
+    return current_user
 
 
 @router.patch(
     "/current_user",
     response_model=UserSchema,
     responses=combine_responses(
-        not_authenticated_response(),
-        invalid_token_responses(),
-        not_found_response("User"),
+        invalid_authentication_responses(),
         bad_request_response("Email already in use"),
     ),
 )
 async def update_current_user(
     user_data: UpdateUserSchema,
-    user_id: int = Depends(get_current_user_id),
+    current_user=Depends(get_current_user),
     crud: UsersCrud = Depends(get_users_crud),
 ):
-    return crud.update_user(user_id, user_data)
+    return crud.update_user(current_user, user_data)
 
 
 @router.delete(
-    "/current_user",
-    status_code=204,
-    responses=combine_responses(
-        not_authenticated_response(),
-        invalid_token_responses(),
-        not_found_response("User"),
-    ),
+    "/current_user", status_code=204, responses=invalid_authentication_responses()
 )
 async def delete_current_user(
-    user_id: int = Depends(get_current_user_id),
+    current_user=Depends(get_current_user),
     crud: UsersCrud = Depends(get_users_crud),
 ):
-    crud.remove_user(user_id)
+    crud.remove_user(current_user)
     return Response(status_code=204)
