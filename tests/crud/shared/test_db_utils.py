@@ -2,6 +2,7 @@ import pytest
 from app.models.book import Book
 from app.crud.shared.db_utils import (
     fetch_by_id,
+    fetch_by_attr,
     ensure_unique,
     ensure_association_does_not_exist,
     fetch_association,
@@ -24,6 +25,26 @@ def test_fetch_by_id(session):
 
     with pytest.raises(Exception) as exc_info:
         fetch_by_id(session, Book, 999, "Book not found")
+    assert exc_info.value.status_code == 404
+    assert "Book not found" in str(exc_info.value)
+
+
+def test_fetch_by_attr(session):
+    book = Book(
+        title="Test Book",
+        description="Description",
+        year_of_publication=2023,
+        isbn="1234567890",
+    )
+    session.add(book)
+    session.commit()
+
+    fetched_book = fetch_by_attr(session, Book, "isbn", "1234567890", "Book not found")
+    assert fetched_book.id == book.id
+    assert fetched_book.title == book.title
+
+    with pytest.raises(Exception) as exc_info:
+        fetch_by_attr(session, Book, "isbn", "9876543210", "Book not found")
     assert exc_info.value.status_code == 404
     assert "Book not found" in str(exc_info.value)
 

@@ -6,6 +6,7 @@ from app.config import Base, get_db
 from app.config import settings
 from app.models import *
 from app.main import app
+from app.services.authorization import get_current_user
 
 
 @pytest.fixture(scope="session")
@@ -34,3 +35,19 @@ def client(session):
     client = TestClient(app)
     yield client
     app.dependency_overrides.pop(get_db)
+
+
+@pytest.fixture(scope="function")
+def authorized_client(client, session):
+    user = User(
+        email="user@example.com",
+        hashed_password="some_hashed_password",
+        name="User",
+        surname="User",
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    app.dependency_overrides[get_current_user] = lambda: user
+    yield client
+    app.dependency_overrides.pop(get_current_user)
