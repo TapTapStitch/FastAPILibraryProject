@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException
 from ..models.user import User
 from ..schemas.user import SignUpSchema, SignInSchema, UpdateUserSchema
-from .shared.db_utils import ensure_unique, fetch_by_id, fetch_by_attr
+from .shared.db_utils import ensure_unique, fetch_by_attr
 
 
 class UsersCrud:
