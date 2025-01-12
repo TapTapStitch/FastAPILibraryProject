@@ -2,14 +2,11 @@ import argparse
 from sqlalchemy_utils import database_exists, create_database, drop_database
 import subprocess
 from sqlalchemy import create_engine
-from dotenv import dotenv_values
+from app.config import settings
 
 
 def get_engine(use_test_db):
-    config = dotenv_values(".env")
-    db_url = (
-        config.get("TEST_DATABASE_URL") if use_test_db else config.get("DATABASE_URL")
-    )
+    db_url = settings.TEST_DATABASE_URL if use_test_db else settings.DATABASE_URL
     if not db_url:
         raise ValueError("Database URL not found in environment variables.")
     return create_engine(db_url)

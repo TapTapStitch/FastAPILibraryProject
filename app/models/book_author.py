@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, func
-from ..config import Base
+from app.config import Base
 
 
 class BookAuthor(Base):

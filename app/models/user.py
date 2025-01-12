@@ -1,16 +1,15 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 from app.config import Base
 
 
-class Genre(Base):
-    __tablename__ = "genres"
+class User(Base):
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
     name = Column(String)
-    description = Column(Text)
+    surname = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
-    books = relationship("Book", secondary="book_genre", back_populates="genres")

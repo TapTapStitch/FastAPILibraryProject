@@ -1,6 +1,6 @@
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
-from ..schemas.pagination import PaginationParams, PaginatedResponse
+from app.schemas.pagination import PaginationParams, PaginatedResponse
 
 
 def paginate(

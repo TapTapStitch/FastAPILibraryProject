@@ -1,21 +1,16 @@
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy.orm import Session
-from ..config import get_db
-from ..schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchema
-from ..schemas.book import BookSchema
-from ..schemas.pagination import PaginationParams, PaginatedResponse
-from ..crud.authors import AuthorsCrud
-from .shared.response_templates import (
+from app.schemas.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchema
+from app.schemas.book import BookSchema
+from app.schemas.pagination import PaginationParams, PaginatedResponse
+from app.crud.authors import AuthorsCrud
+from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,
 )
+from app.routers.shared.depends import get_authors_crud
 
 router = APIRouter()
-
-
-def get_authors_crud(db: Session = Depends(get_db)) -> AuthorsCrud:
-    return AuthorsCrud(db)
 
 
 @router.get("/", response_model=PaginatedResponse[AuthorSchema])
