@@ -4,17 +4,34 @@ from ..schemas.user import UserSchema, SignUpSchema, SignInSchema, UpdateUserSch
 from .shared.depends import get_users_crud
 from ..services.authorization import create_jwt_token, get_current_user_id
 from ..schemas.token import Token
+from .shared.response_templates import (
+    bad_request_response,
+    not_authenticated_response,
+    invalid_token_responses,
+    invalid_password_response,
+    not_found_response,
+    combine_responses,
+)
 
 router = APIRouter()
 
 
-@router.post("/sign_up", status_code=201)
+@router.post(
+    "/sign_up", status_code=201, responses=bad_request_response("Email already in use")
+)
 async def sign_up(user_data: SignUpSchema, crud: UsersCrud = Depends(get_users_crud)):
     crud.create_user(user_data)
     return Response(status_code=201)
 
 
-@router.post("/sign_in", response_model=Token)
+@router.post(
+    "/sign_in",
+    response_model=Token,
+    responses=combine_responses(
+        invalid_password_response(),
+        not_found_response("User"),
+    ),
+)
 async def sign_in(
     user_data: SignInSchema,
     crud: UsersCrud = Depends(get_users_crud),
@@ -23,7 +40,15 @@ async def sign_in(
     return create_jwt_token(user.id)
 
 
-@router.get("/current_user", response_model=UserSchema)
+@router.get(
+    "/current_user",
+    response_model=UserSchema,
+    responses=combine_responses(
+        not_authenticated_response(),
+        invalid_token_responses(),
+        not_found_response("User"),
+    ),
+)
 async def show_current_user(
     user_id: int = Depends(get_current_user_id),
     crud: UsersCrud = Depends(get_users_crud),
@@ -31,7 +56,16 @@ async def show_current_user(
     return crud.get_user_by_id(user_id)
 
 
-@router.patch("/current_user", response_model=UserSchema)
+@router.patch(
+    "/current_user",
+    response_model=UserSchema,
+    responses=combine_responses(
+        not_authenticated_response(),
+        invalid_token_responses(),
+        not_found_response("User"),
+        bad_request_response("Email already in use"),
+    ),
+)
 async def update_current_user(
     user_data: UpdateUserSchema,
     user_id: int = Depends(get_current_user_id),
@@ -40,7 +74,15 @@ async def update_current_user(
     return crud.update_user(user_id, user_data)
 
 
-@router.delete("/current_user", status_code=204)
+@router.delete(
+    "/current_user",
+    status_code=204,
+    responses=combine_responses(
+        not_authenticated_response(),
+        invalid_token_responses(),
+        not_found_response("User"),
+    ),
+)
 async def delete_current_user(
     user_id: int = Depends(get_current_user_id),
     crud: UsersCrud = Depends(get_users_crud),

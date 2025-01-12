@@ -2,6 +2,9 @@ from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,
+    not_authenticated_response,
+    invalid_token_responses,
+    invalid_password_response,
 )
 
 
@@ -34,6 +37,53 @@ def test_bad_request_response():
         }
     }
     assert bad_request_response(detail) == expected
+
+
+def test_not_authenticated_response():
+    expected = {
+        "403": {
+            "description": "Forbidden",
+            "content": {
+                "application/json": {"example": {"detail": "Not authenticated"}}
+            },
+        }
+    }
+    assert not_authenticated_response() == expected
+
+
+def test_invalid_token_responses():
+    expected = {
+        "401": {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "token_expired": {
+                            "summary": "Token expired",
+                            "value": {"detail": "Token has expired"},
+                        },
+                        "invalid_token": {
+                            "summary": "Invalid token",
+                            "value": {"detail": "Invalid token"},
+                        },
+                    }
+                }
+            },
+        }
+    }
+    assert invalid_token_responses() == expected
+
+
+def test_invalid_password_response():
+    expected = {
+        "401": {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {"example": {"detail": "Invalid password"}}
+            },
+        }
+    }
+    assert invalid_password_response() == expected
 
 
 def test_combine_responses():

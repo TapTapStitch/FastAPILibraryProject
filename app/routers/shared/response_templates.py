@@ -25,6 +25,50 @@ def bad_request_response(detail: str):
     }
 
 
+def not_authenticated_response():
+    return {
+        "403": {
+            "description": "Forbidden",
+            "content": {
+                "application/json": {"example": {"detail": "Not authenticated"}}
+            },
+        }
+    }
+
+
+def invalid_token_responses():
+    return {
+        "401": {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "token_expired": {
+                            "summary": "Token expired",
+                            "value": {"detail": "Token has expired"},
+                        },
+                        "invalid_token": {
+                            "summary": "Invalid token",
+                            "value": {"detail": "Invalid token"},
+                        },
+                    }
+                }
+            },
+        }
+    }
+
+
+def invalid_password_response():
+    return {
+        "401": {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {"example": {"detail": "Invalid password"}}
+            },
+        }
+    }
+
+
 def combine_responses(*responses):
     combined = {}
     for response in responses:
