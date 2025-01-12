@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, select
-from ..services.pagination import paginate
-from ..models.genre import Genre
-from ..models.book import Book
-from ..models.book_genre import BookGenre
-from ..schemas.genre import CreateGenreSchema, UpdateGenreSchema
-from ..schemas.pagination import PaginationParams
-from .shared.db_utils import (
+from app.services.pagination import paginate
+from app.models.genre import Genre
+from app.models.book import Book
+from app.models.book_genre import BookGenre
+from app.schemas.genre import CreateGenreSchema, UpdateGenreSchema
+from app.schemas.pagination import PaginationParams
+from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_association_does_not_exist,
     fetch_association,

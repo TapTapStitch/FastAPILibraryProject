@@ -4,9 +4,9 @@ from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from app.config import settings
-from ..schemas.token import Token
+from app.schemas.token import Token
 from app.config import get_db
-from ..models.user import User
+from app.models.user import User
 
 
 auth_bearer = HTTPBearer()
