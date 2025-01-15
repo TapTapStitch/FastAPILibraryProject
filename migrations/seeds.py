@@ -31,7 +31,7 @@ def create_books(session: Session, authors: list, genres: list, count: int = 300
             title=fake.sentence(nb_words=4),
             description=fake.text(),
             year_of_publication=fake.year(),
-            isbn=fake.isbn13(),
+            isbn=fake.isbn13().replace("-", ""),
         )
         # Assign random authors and genres
         book.authors = random.sample(authors, k=random.randint(1, 3))
