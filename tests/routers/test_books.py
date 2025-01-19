@@ -12,7 +12,7 @@ valid_book_data = {
 
 @pytest.fixture
 def create_sample_book(client):
-    response = client.post("/books/", json=valid_book_data)
+    response = client.post("/api/v1/books/", json=valid_book_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
@@ -24,7 +24,7 @@ def create_sample_author(client):
         "surname": "Doe",
         "year_of_birth": 1980,
     }
-    response = client.post("/authors/", json=author_data)
+    response = client.post("/api/v1/authors/", json=author_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
@@ -33,7 +33,7 @@ def create_sample_author(client):
 def associate_book_and_author(client, create_sample_book, create_sample_author):
     book_id = create_sample_book["id"]
     author_id = create_sample_author["id"]
-    response = client.post(f"/books/{book_id}/authors/{author_id}")
+    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_201_CREATED
     return {"book_id": book_id, "author_id": author_id}
 
@@ -43,7 +43,7 @@ def create_sample_genre(client):
     genre_data = {
         "name": "Fiction",
     }
-    response = client.post("/genres/", json=genre_data)
+    response = client.post("/api/v1/genres/", json=genre_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
@@ -52,14 +52,14 @@ def create_sample_genre(client):
 def associate_book_and_genre(client, create_sample_book, create_sample_genre):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_201_CREATED
     return {"book_id": book_id, "genre_id": genre_id}
 
 
 # Test for fetching all books
 def test_get_books(client):
-    response = client.get("/books/")
+    response = client.get("/api/v1/books/")
     assert response.status_code == status.HTTP_200_OK
     assert isinstance(response.json()["items"], list)
 
@@ -67,21 +67,21 @@ def test_get_books(client):
 # Test for fetching a book by ID
 def test_get_book_by_id(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.get(f"/books/{book_id}")
+    response = client.get(f"/api/v1/books/{book_id}")
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["id"] == book_id
 
 
 # Test for attempting to fetch a non-existent book
 def test_get_nonexistent_book(client):
-    response = client.get("/books/999999")
+    response = client.get("/api/v1/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for creating a new book
 def test_create_book(client):
-    response = client.post("/books/", json=valid_book_data)
+    response = client.post("/api/v1/books/", json=valid_book_data)
     assert response.status_code == status.HTTP_201_CREATED
     assert "id" in response.json()
     assert response.json()["title"] == valid_book_data["title"]
@@ -91,7 +91,7 @@ def test_create_book(client):
 def test_create_book_with_duplicate_isbn(client, create_sample_book):
     duplicate_isbn_data = valid_book_data.copy()
     duplicate_isbn_data["isbn"] = create_sample_book["isbn"]  # Use the same ISBN
-    response = client.post("/books/", json=duplicate_isbn_data)
+    response = client.post("/api/v1/books/", json=duplicate_isbn_data)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "ISBN must be unique"}
 
@@ -100,7 +100,7 @@ def test_create_book_with_duplicate_isbn(client, create_sample_book):
 def test_update_book(client, create_sample_book):
     book_id = create_sample_book["id"]
     updated_data = {"title": "Updated Title", "isbn": "1234567890123"}
-    response = client.patch(f"/books/{book_id}", json=updated_data)
+    response = client.patch(f"/api/v1/books/{book_id}", json=updated_data)
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["title"] == updated_data["title"]
 
@@ -108,7 +108,7 @@ def test_update_book(client, create_sample_book):
 # Test for updating a non-existent book
 def test_update_nonexistent_book(client):
     updated_data = {"title": "Updated Title"}
-    response = client.patch("/books/999999", json=updated_data)
+    response = client.patch("/api/v1/books/999999", json=updated_data)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -117,10 +117,10 @@ def test_update_nonexistent_book(client):
 def test_update_book_with_invalid_isbn(client, create_sample_book):
     another_book = valid_book_data.copy()
     another_book["isbn"] = "1234567890124"
-    client.post("/books/", json=another_book)
+    client.post("/api/v1/books/", json=another_book)
     book_id = create_sample_book["id"]
     invalid_isbn_data = {"isbn": "1234567890124"}
-    response = client.patch(f"/books/{book_id}", json=invalid_isbn_data)
+    response = client.patch(f"/api/v1/books/{book_id}", json=invalid_isbn_data)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "ISBN must be unique"}
 
@@ -128,18 +128,18 @@ def test_update_book_with_invalid_isbn(client, create_sample_book):
 # Test for deleting a book
 def test_delete_book(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/books/{book_id}")
+    response = client.delete(f"/api/v1/books/{book_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Check if the book is really deleted
-    response = client.get(f"/books/{book_id}")
+    response = client.get(f"/api/v1/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for attempting to delete a non-existent book
 def test_delete_nonexistent_book(client):
-    response = client.delete("/books/999999")
+    response = client.delete("/api/v1/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -147,7 +147,7 @@ def test_delete_nonexistent_book(client):
 # Test for getting authors of a book
 def test_get_authors_of_book(client, associate_book_and_author):
     book_id = associate_book_and_author["book_id"]
-    response = client.get(f"/books/{book_id}/authors")
+    response = client.get(f"/api/v1/books/{book_id}/authors")
     assert response.status_code == status.HTTP_200_OK
     authors = response.json()["items"]
     assert isinstance(authors, list)
@@ -157,7 +157,7 @@ def test_get_authors_of_book(client, associate_book_and_author):
 
 # Test for getting authors of a non-existent book
 def test_get_authors_of_nonexistent_book(client):
-    response = client.get("/books/999999/authors")
+    response = client.get("/api/v1/books/999999/authors")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -168,11 +168,11 @@ def test_create_book_author_association(
 ):
     book_id = create_sample_book["id"]
     author_id = create_sample_author["id"]
-    response = client.post(f"/books/{book_id}/authors/{author_id}")
+    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_201_CREATED
 
     # Verify the association exists
-    response = client.get(f"/books/{book_id}/authors")
+    response = client.get(f"/api/v1/books/{book_id}/authors")
     authors = response.json()["items"]
     assert any(author["id"] == author_id for author in authors)
 
@@ -181,7 +181,7 @@ def test_create_book_author_association(
 def test_create_duplicate_book_author_association(client, associate_book_and_author):
     book_id = associate_book_and_author["book_id"]
     author_id = associate_book_and_author["author_id"]
-    response = client.post(f"/books/{book_id}/authors/{author_id}")
+    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Association already exists"}
 
@@ -189,7 +189,7 @@ def test_create_duplicate_book_author_association(client, associate_book_and_aut
 # Test for creating an association with a non-existent book
 def test_create_book_author_association_nonexistent_book(client, create_sample_author):
     author_id = create_sample_author["id"]
-    response = client.post(f"/books/999999/authors/{author_id}")
+    response = client.post(f"/api/v1/books/999999/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -197,7 +197,7 @@ def test_create_book_author_association_nonexistent_book(client, create_sample_a
 # Test for creating an association with a non-existent author
 def test_create_book_author_association_nonexistent_author(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.post(f"/books/{book_id}/authors/999999")
+    response = client.post(f"/api/v1/books/{book_id}/authors/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Author not found"}
 
@@ -206,11 +206,11 @@ def test_create_book_author_association_nonexistent_author(client, create_sample
 def test_delete_book_author_association(client, associate_book_and_author):
     book_id = associate_book_and_author["book_id"]
     author_id = associate_book_and_author["author_id"]
-    response = client.delete(f"/books/{book_id}/authors/{author_id}")
+    response = client.delete(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Verify the association is removed
-    response = client.get(f"/books/{book_id}/authors")
+    response = client.get(f"/api/v1/books/{book_id}/authors")
     authors = response.json()["items"]
     assert not any(author["id"] == author_id for author in authors)
 
@@ -221,7 +221,7 @@ def test_delete_nonexistent_book_author_association(
 ):
     book_id = create_sample_book["id"]
     author_id = create_sample_author["id"]
-    response = client.delete(f"/books/{book_id}/authors/{author_id}")
+    response = client.delete(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Association not found"}
 
@@ -229,7 +229,7 @@ def test_delete_nonexistent_book_author_association(
 # Test for deleting an association with a non-existent book
 def test_delete_book_author_association_nonexistent_book(client, create_sample_author):
     author_id = create_sample_author["id"]
-    response = client.delete(f"/books/999999/authors/{author_id}")
+    response = client.delete(f"/api/v1/books/999999/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -237,7 +237,7 @@ def test_delete_book_author_association_nonexistent_book(client, create_sample_a
 # Test for deleting an association with a non-existent author
 def test_delete_book_author_association_nonexistent_author(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/books/{book_id}/authors/999999")
+    response = client.delete(f"/api/v1/books/{book_id}/authors/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Author not found"}
 
@@ -245,7 +245,7 @@ def test_delete_book_author_association_nonexistent_author(client, create_sample
 # Test for getting genres of a book
 def test_get_genres_of_book(client, associate_book_and_genre):
     book_id = associate_book_and_genre["book_id"]
-    response = client.get(f"/books/{book_id}/genres")
+    response = client.get(f"/api/v1/books/{book_id}/genres")
     assert response.status_code == status.HTTP_200_OK
     genres = response.json()["items"]
     assert isinstance(genres, list)
@@ -255,7 +255,7 @@ def test_get_genres_of_book(client, associate_book_and_genre):
 
 # Test for getting genres of a non-existent book
 def test_get_genres_of_nonexistent_book(client):
-    response = client.get("/books/999999/genres")
+    response = client.get("/api/v1/books/999999/genres")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -264,11 +264,11 @@ def test_get_genres_of_nonexistent_book(client):
 def test_create_book_genre_association(client, create_sample_book, create_sample_genre):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_201_CREATED
 
     # Verify the association exists
-    response = client.get(f"/books/{book_id}/genres")
+    response = client.get(f"/api/v1/books/{book_id}/genres")
     genres = response.json()["items"]
     assert any(genre["id"] == genre_id for genre in genres)
 
@@ -277,7 +277,7 @@ def test_create_book_genre_association(client, create_sample_book, create_sample
 def test_create_duplicate_book_genre_association(client, associate_book_and_genre):
     book_id = associate_book_and_genre["book_id"]
     genre_id = associate_book_and_genre["genre_id"]
-    response = client.post(f"/books/{book_id}/genres/{genre_id}")
+    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Association already exists"}
 
@@ -285,7 +285,7 @@ def test_create_duplicate_book_genre_association(client, associate_book_and_genr
 # Test for creating an association with a non-existent book
 def test_create_book_genre_association_nonexistent_book(client, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/books/999999/genres/{genre_id}")
+    response = client.post(f"/api/v1/books/999999/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -293,7 +293,7 @@ def test_create_book_genre_association_nonexistent_book(client, create_sample_ge
 # Test for creating an association with a non-existent genre
 def test_create_book_genre_association_nonexistent_genre(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.post(f"/books/{book_id}/genres/999999")
+    response = client.post(f"/api/v1/books/{book_id}/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
@@ -302,11 +302,11 @@ def test_create_book_genre_association_nonexistent_genre(client, create_sample_b
 def test_delete_book_genre_association(client, associate_book_and_genre):
     book_id = associate_book_and_genre["book_id"]
     genre_id = associate_book_and_genre["genre_id"]
-    response = client.delete(f"/books/{book_id}/genres/{genre_id}")
+    response = client.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Verify the association is removed
-    response = client.get(f"/books/{book_id}/genres")
+    response = client.get(f"/api/v1/books/{book_id}/genres")
     genres = response.json()["items"]
     assert not any(genre["id"] == genre_id for genre in genres)
 
@@ -317,7 +317,7 @@ def test_delete_nonexistent_book_genre_association(
 ):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/books/{book_id}/genres/{genre_id}")
+    response = client.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Association not found"}
 
@@ -325,7 +325,7 @@ def test_delete_nonexistent_book_genre_association(
 # Test for deleting an association with a non-existent book
 def test_delete_book_genre_association_nonexistent_book(client, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/books/999999/genres/{genre_id}")
+    response = client.delete(f"/api/v1/books/999999/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -333,6 +333,6 @@ def test_delete_book_genre_association_nonexistent_book(client, create_sample_ge
 # Test for deleting an association with a non-existent genre
 def test_delete_book_genre_association_nonexistent_genre(client, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/books/{book_id}/genres/999999")
+    response = client.delete(f"/api/v1/books/{book_id}/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
