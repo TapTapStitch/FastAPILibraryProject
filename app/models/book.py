@@ -12,6 +12,9 @@ class Book(Base):
     description = Column(Text)
     year_of_publication = Column(Integer)
     isbn = Column(String, unique=True)
+    series = Column(String)
+    file_link = Column(String)
+    edition = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

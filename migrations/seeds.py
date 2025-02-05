@@ -21,7 +21,7 @@ def create_authors(session: Session, count: int = 300):
         )
         session.add(author)
         authors.append(author)
-    session.commit()
+        session.commit()
     return authors
 
 
@@ -32,12 +32,15 @@ def create_books(session: Session, authors: list, genres: list, count: int = 300
             description=fake.text(),
             year_of_publication=fake.year(),
             isbn=fake.isbn13().replace("-", ""),
+            series=fake.word().title(),
+            file_link=fake.url(),
+            edition=f"{random.randint(1, 10)} edition",
         )
         # Assign random authors and genres
         book.authors = random.sample(authors, k=random.randint(1, 3))
         book.genres = random.sample(genres, k=random.randint(1, 2))
         session.add(book)
-    session.commit()
+        session.commit()
 
 
 def create_genres(session: Session, count: int = 300):
@@ -49,7 +52,7 @@ def create_genres(session: Session, count: int = 300):
         )
         session.add(genre)
         genres.append(genre)
-    session.commit()
+        session.commit()
     return genres
 
 
@@ -60,9 +63,11 @@ def create_users(session: Session, count: int = 300):
             hashed_password=hashed_password,
             name=fake.first_name(),
             surname=fake.last_name(),
+            avatar_link=fake.url(),
+            access_level=random.randint(0, 1),
         )
         session.add(user)
-    session.commit()
+        session.commit()
 
 
 session = SessionLocal()

@@ -7,6 +7,9 @@ valid_book_data = {
     "description": "A great book",
     "year_of_publication": 2025,
     "isbn": "1234567890123",
+    "series": "Sample Series",
+    "file_link": "https://example.com/sample.pdf",
+    "edition": "First",
 }
 
 

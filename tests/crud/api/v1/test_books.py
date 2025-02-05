@@ -22,6 +22,9 @@ def sample_book(session):
         description="A sample book description",
         year_of_publication=2023,
         isbn="1234567890123",  # 13-digit ISBN
+        series="Sample Series",
+        file_link="https://example.com",
+        edition="Sample Edition",
     )
     session.add(book)
     session.commit()
@@ -67,6 +70,9 @@ def test_create_book(book_crud):
         description="A new book description",
         year_of_publication=2023,
         isbn="0987654321098",  # Valid 13-digit ISBN
+        series="New Series",
+        file_link="https://example.com",
+        edition="New Edition",
     )
     book = book_crud.create_book(book_data)
     assert book.title == "New Book"
@@ -80,6 +86,9 @@ def test_create_book_with_duplicate_isbn(book_crud, sample_book):
         description="Another book description",
         year_of_publication=2023,
         isbn=sample_book.isbn,  # Duplicate ISBN
+        series="Another Series",
+        file_link="https://example.com",
+        edition="Another Edition",
     )
     with pytest.raises(HTTPException) as excinfo:
         book_crud.create_book(book_data)
@@ -116,6 +125,9 @@ def test_update_book_with_duplicate_isbn(book_crud, sample_book, session):
         description="Another description",
         year_of_publication=2023,
         isbn="2222222222222",  # Valid 13-digit ISBN
+        series="Another Series",
+        file_link="https://example.com",
+        edition="Another Edition",
     )
     session.add(another_book)
     session.commit()

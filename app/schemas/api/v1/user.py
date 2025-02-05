@@ -22,6 +22,8 @@ class UserSchema(BaseModel):
     email: EmailStr
     name: str
     surname: str
+    avatar_link: str
+    access_level: int
     created_at: datetime
     updated_at: datetime
 
@@ -31,6 +33,7 @@ class SignUpSchema(BaseModel):
     surname: str
     email: EmailStr
     password: str
+    avatar_link: str
 
     model_config = ConfigDict(extra="forbid")
 
@@ -44,6 +47,7 @@ class UpdateUserSchema(BaseModel):
     surname: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+    avatar_link: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 

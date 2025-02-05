@@ -23,6 +23,8 @@ def test_user_schema_valid():
         email=valid_email,
         name="John",
         surname="Doe",
+        avatar_link="https://example.com/avatar.jpg",
+        access_level=0,
         created_at=current_time,
         updated_at=current_time,
     )
@@ -41,6 +43,8 @@ def test_user_schema_invalid_email():
             email=invalid_email,
             name="John",
             surname="Doe",
+            avatar_link="https://example.com/avatar.jpg",
+            access_level=0,
             created_at=current_time,
             updated_at=current_time,
         )
@@ -52,6 +56,7 @@ def test_signup_schema_valid():
         surname="Doe",
         email=valid_email,
         password=valid_password,
+        avatar_link="https://example.com/avatar.jpg",
     )
     assert signup.name == "John"
     assert signup.surname == "Doe"
@@ -66,6 +71,7 @@ def test_signup_schema_invalid_password():
             surname="Doe",
             email=valid_email,
             password=invalid_password,
+            avatar_link="https://example.com/avatar.jpg",
         )
 
 

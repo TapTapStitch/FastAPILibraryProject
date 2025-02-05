@@ -11,5 +11,7 @@ class User(Base):
     hashed_password = Column(String)
     name = Column(String)
     surname = Column(String)
+    avatar_link = Column(String)
+    access_level = Column(Integer, default=0)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

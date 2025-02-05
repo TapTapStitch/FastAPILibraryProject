@@ -7,6 +7,7 @@ valid_user_data = {
     "surname": "Doe",
     "email": "johndoe@example.com",
     "password": "ValidPass123",
+    "avatar_link": "https://example.com/avatar.jpg",
 }
 
 update_data = {
@@ -91,6 +92,7 @@ def test_update_current_user_existing_email(authorized_client):
             "surname": "Doe",
             "email": "janedoe@example.com",
             "password": "ValidPass123",
+            "avatar_link": "https://example.com/avatar.jpg",
         },
     )
 

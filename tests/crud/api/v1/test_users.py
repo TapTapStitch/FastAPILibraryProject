@@ -14,7 +14,11 @@ def user_crud(session: Session):
 @pytest.fixture
 def sample_user(session: Session, user_crud: UsersCrud):
     user = SignUpSchema(
-        email="test@example.com", password="ValidPass123", name="Test", surname="User"
+        email="test@example.com",
+        password="ValidPass123",
+        name="Test",
+        surname="User",
+        avatar_link="https://example.com/avatar.jpg",
     )
     user = user_crud.sign_up_user(user)
     return user
@@ -23,7 +27,11 @@ def sample_user(session: Session, user_crud: UsersCrud):
 # Positive Test: Sign up a new user
 def test_sign_up_user(user_crud):
     user_data = SignUpSchema(
-        name="New", surname="User", email="newuser@example.com", password="ValidPass123"
+        name="New",
+        surname="User",
+        email="newuser@example.com",
+        password="ValidPass123",
+        avatar_link="https://example.com/avatar.jpg",
     )
     user = user_crud.sign_up_user(user_data)
     assert user.email == "newuser@example.com"
@@ -38,6 +46,7 @@ def test_sign_up_user_existing_email(user_crud, sample_user):
         surname="User",
         email="test@example.com",  # Email already exists
         password="ValidPass123",
+        avatar_link="https://example.com/avatar.jpg",
     )
     with pytest.raises(HTTPException) as excinfo:
         user_crud.sign_up_user(user_data)
@@ -92,6 +101,7 @@ def test_update_user_existing_email(user_crud, sample_user, session: Session):
         hashed_password="$2b$12$KIXTOzQF5Y8G1Z1Z1Z1Z1u",
         name="Another",
         surname="User",
+        avatar_link="https://example.com/avatar.jpg",
     )
     session.add(another_user)
     session.commit()
@@ -125,6 +135,7 @@ def test_remove_non_existent_user(user_crud, session: Session):
         hashed_password="$2b$12$KIXTOzQF5Y8G1Z1Z1Z1Z1u",
         name="Non",
         surname="Existent",
+        avatar_link="https://example.com/avatar.jpg",
     )
     with pytest.raises(Exception):
         user_crud.remove_user(non_existent_user)

@@ -16,6 +16,9 @@ def test_book_schema():
         description="A book about Python programming.",
         year_of_publication=2020,
         isbn="1234567890123",
+        series="",
+        file_link="",
+        edition="",
         created_at=datetime.now(),
         updated_at=datetime.now(),
     )
@@ -29,6 +32,9 @@ def test_book_schema():
             description="A book about Python programming.",
             year_of_publication=2020,
             isbn="123",  # Invalid ISBN
+            series="",
+            file_link="",
+            edition="",
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
@@ -41,6 +47,9 @@ def test_create_book_schema():
         description="",
         year_of_publication=2020,
         isbn="1234567890123",
+        series="",
+        file_link="",
+        edition="",
     )
     assert book_data.title == "Python Basics"
 

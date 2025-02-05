@@ -10,6 +10,9 @@ def test_create_book(session):
         description="An epic journey across the world.",
         year_of_publication=2021,
         isbn="1234567890123",
+        series="The Great Adventure Series",
+        file_link="https://example.com/books/123",
+        edition="First Edition",
     )
     session.add(new_book)
     session.commit()
@@ -21,6 +24,9 @@ def test_create_book(session):
     assert retrieved_book.description == "An epic journey across the world."
     assert retrieved_book.year_of_publication == 2021
     assert retrieved_book.isbn == "1234567890123"
+    assert retrieved_book.series == "The Great Adventure Series"
+    assert retrieved_book.file_link == "https://example.com/books/123"
+    assert retrieved_book.edition == "First Edition"
 
 
 def test_unique_isbn_constraint(session):

@@ -28,6 +28,8 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("surname", sa.String(), nullable=True),
+        sa.Column("avatar_link", sa.String(), nullable=True),
+        sa.Column("access_level", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),

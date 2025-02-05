@@ -44,6 +44,7 @@ def authorized_client(client, session):
         hashed_password="some_hashed_password",
         name="User",
         surname="User",
+        avatar_link="https://example.com/avatar.jpg",
     )
     session.add(user)
     session.commit()
