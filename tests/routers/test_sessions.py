@@ -73,7 +73,9 @@ def test_show_current_user(authorized_client):
 
 # Test for updating the current user details
 def test_update_current_user(authorized_client):
-    response = authorized_client.patch("/api/v1/sessions/current_user", json=update_data)
+    response = authorized_client.patch(
+        "/api/v1/sessions/current_user", json=update_data
+    )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["email"] == update_data["email"]
     assert response.json()["name"] == update_data["name"]
@@ -94,7 +96,9 @@ def test_update_current_user_existing_email(authorized_client):
 
     # Try updating to the existing email
     update_data["email"] = "janedoe@example.com"
-    response = authorized_client.patch("/api/v1/sessions/current_user", json=update_data)
+    response = authorized_client.patch(
+        "/api/v1/sessions/current_user", json=update_data
+    )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Email already in use"}
 

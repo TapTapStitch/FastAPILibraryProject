@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, Response
 from app.crud.api.v1.users import UsersCrud
-from app.schemas.api.v1.user import UserSchema, SignUpSchema, SignInSchema, UpdateUserSchema
+from app.schemas.api.v1.user import (
+    UserSchema,
+    SignUpSchema,
+    SignInSchema,
+    UpdateUserSchema,
+)
 from app.routers.api.v1.shared.depends import get_users_crud
 from app.services.authorization import create_jwt_token, get_current_user
 from app.schemas.token import Token

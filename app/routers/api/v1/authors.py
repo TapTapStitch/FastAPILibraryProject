@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.api.v1.author import AuthorSchema, CreateAuthorSchema, UpdateAuthorSchema
+from app.schemas.api.v1.author import (
+    AuthorSchema,
+    CreateAuthorSchema,
+    UpdateAuthorSchema,
+)
 from app.schemas.api.v1.book import BookSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.authors import AuthorsCrud
