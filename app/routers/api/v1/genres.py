@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
-from app.schemas.book import BookSchema
+from app.schemas.api.v1.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
+from app.schemas.api.v1.book import BookSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
-from app.crud.genres import GenresCrud
+from app.crud.api.v1.genres import GenresCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,
 )
-from app.routers.shared.depends import get_genres_crud
+from app.routers.api.v1.shared.depends import get_genres_crud
 
 router = APIRouter()
 

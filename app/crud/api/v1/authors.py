@@ -4,7 +4,7 @@ from app.services.pagination import paginate
 from app.models.book import Book
 from app.models.author import Author
 from app.models.book_author import BookAuthor
-from app.schemas.author import CreateAuthorSchema, UpdateAuthorSchema
+from app.schemas.api.v1.author import CreateAuthorSchema, UpdateAuthorSchema
 from app.schemas.pagination import PaginationParams
 from app.crud.shared.db_utils import (
     fetch_by_id,

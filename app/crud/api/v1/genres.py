@@ -4,7 +4,7 @@ from app.services.pagination import paginate
 from app.models.genre import Genre
 from app.models.book import Book
 from app.models.book_genre import BookGenre
-from app.schemas.genre import CreateGenreSchema, UpdateGenreSchema
+from app.schemas.api.v1.genre import CreateGenreSchema, UpdateGenreSchema
 from app.schemas.pagination import PaginationParams
 from app.crud.shared.db_utils import (
     fetch_by_id,

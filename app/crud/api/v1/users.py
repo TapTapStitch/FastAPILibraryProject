@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from app.models.user import User
-from app.schemas.user import SignUpSchema, SignInSchema, UpdateUserSchema
+from app.schemas.api.v1.user import SignUpSchema, SignInSchema, UpdateUserSchema
 from app.crud.shared.db_utils import ensure_unique, fetch_by_attr
 
 

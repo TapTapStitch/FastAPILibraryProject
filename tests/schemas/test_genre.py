@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytest
 from pydantic import ValidationError
-from app.schemas.genre import (
+from app.schemas.api.v1.genre import (
     GenreSchema,
     CreateGenreSchema,
     UpdateGenreSchema,

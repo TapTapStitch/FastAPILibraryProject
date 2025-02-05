@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
-from app.crud.books import BooksCrud
-from app.schemas.book import CreateBookSchema, UpdateBookSchema
+from app.crud.api.v1.books import BooksCrud
+from app.schemas.api.v1.book import CreateBookSchema, UpdateBookSchema
 from app.schemas.pagination import PaginationParams
 from app.models.book import Book
 from app.models.author import Author

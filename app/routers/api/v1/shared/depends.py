@@ -1,10 +1,10 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.config import get_db
-from app.crud.books import BooksCrud
-from app.crud.authors import AuthorsCrud
-from app.crud.genres import GenresCrud
-from app.crud.users import UsersCrud
+from app.crud.api.v1.books import BooksCrud
+from app.crud.api.v1.authors import AuthorsCrud
+from app.crud.api.v1.genres import GenresCrud
+from app.crud.api.v1.users import UsersCrud
 
 
 def get_books_crud(db: Session = Depends(get_db)) -> BooksCrud:

@@ -2,8 +2,8 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import SignUpSchema, SignInSchema, UpdateUserSchema
-from app.crud.users import UsersCrud
+from app.schemas.api.v1.user import SignUpSchema, SignInSchema, UpdateUserSchema
+from app.crud.api.v1.users import UsersCrud
 
 
 @pytest.fixture

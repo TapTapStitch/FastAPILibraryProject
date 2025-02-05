@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.book import BookSchema, CreateBookSchema, UpdateBookSchema
-from app.schemas.author import AuthorSchema
-from app.schemas.genre import GenreSchema
+from app.schemas.api.v1.book import BookSchema, CreateBookSchema, UpdateBookSchema
+from app.schemas.api.v1.author import AuthorSchema
+from app.schemas.api.v1.genre import GenreSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
-from app.crud.books import BooksCrud
+from app.crud.api.v1.books import BooksCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     combine_responses,
 )
-from app.routers.shared.depends import get_books_crud
+from app.routers.api.v1.shared.depends import get_books_crud
 
 router = APIRouter()
 

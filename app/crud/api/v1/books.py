@@ -6,7 +6,7 @@ from app.models.author import Author
 from app.models.book_author import BookAuthor
 from app.models.genre import Genre
 from app.models.book_genre import BookGenre
-from app.schemas.book import CreateBookSchema, UpdateBookSchema
+from app.schemas.api.v1.book import CreateBookSchema, UpdateBookSchema
 from app.schemas.pagination import PaginationParams
 from app.crud.shared.db_utils import (
     fetch_by_id,

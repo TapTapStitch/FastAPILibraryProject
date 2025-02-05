@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytest
 from pydantic import ValidationError
-from app.schemas.author import (
+from app.schemas.api.v1.author import (
     AuthorSchema,
     CreateAuthorSchema,
     UpdateAuthorSchema,

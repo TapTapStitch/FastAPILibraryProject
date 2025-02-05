@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
-from app.crud.genres import GenresCrud
-from app.schemas.genre import CreateGenreSchema, UpdateGenreSchema
+from app.crud.api.v1.genres import GenresCrud
+from app.schemas.api.v1.genre import CreateGenreSchema, UpdateGenreSchema
 from app.schemas.pagination import PaginationParams
 from app.models.genre import Genre
 from app.models.book import Book
