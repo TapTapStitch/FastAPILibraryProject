@@ -9,6 +9,7 @@ from app.schemas.api.v1.author import (
     UpdateAuthorSchema,
     AuthorSortingSchema,
 )
+from app.schemas.api.v1.book import BookSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.services.sorting import apply_sorting
 from app.crud.shared.db_utils import (
@@ -64,13 +65,31 @@ class AuthorsCrud:
         self.db.delete(author)
         self.db.commit()
 
-    def get_books_of_author(self, author_id: int, pagination: PaginationParams):
+    def get_books_of_author(
+        self,
+        author_id: int,
+        pagination: PaginationParams,
+        sorting_params: BookSortingSchema,
+    ):
         self.get_author_by_id(author_id)
         stmt = (
             select(Book)
             .join(BookAuthor, Book.id == BookAuthor.book_id)
             .where(BookAuthor.author_id == author_id)
         )
+        if sorting_params.sort_by:
+            sort_fields = {
+                "title": Book.title,
+                "description": Book.description,
+                "year_of_publication": Book.year_of_publication,
+                "isbn": Book.isbn,
+                "series": Book.series,
+                "file_link": Book.file_link,
+                "edition": Book.edition,
+                "created_at": Book.created_at,
+                "updated_at": Book.updated_at,
+            }
+            stmt = apply_sorting(stmt, sorting_params, sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def create_author_book_association(self, author_id: int, book_id: int):

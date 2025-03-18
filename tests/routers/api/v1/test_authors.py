@@ -270,3 +270,78 @@ def test_sort_authors_by_year_descending(client):
     assert (
         sorted_years == expected_order
     ), f"Expected order: {expected_order}, got: {sorted_years}"
+
+
+# Test for sorting books of an author by title in ascending order
+def test_sort_books_of_author_by_title_ascending(client, create_sample_author):
+    author_id = create_sample_author["id"]
+    titles = ["Alpha", "Charlie", "Bravo"]
+    created_ids = []
+    for idx, title in enumerate(titles):
+        book_data = {
+            "title": title,
+            "description": f"Description for {title}",
+            "year_of_publication": 2023,
+            "isbn": str(int("1234567890123") + idx + 1),
+            "series": "Sample Series",
+            "file_link": "https://example.com/sample.pdf",
+            "edition": "First",
+        }
+        response = client.post("/api/v1/books/", json=book_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        book_obj = response.json()
+        created_ids.append(book_obj["id"])
+        assoc_response = client.post(
+            f"/api/v1/authors/{author_id}/books/{book_obj['id']}"
+        )
+        assert assoc_response.status_code == status.HTTP_201_CREATED
+
+    response = client.get(
+        f"/api/v1/authors/{author_id}/books?sort_by=title&sort_order=asc"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    books = response.json()["items"]
+    sorted_books = [book for book in books if book["id"] in created_ids]
+    sorted_titles = [book["title"] for book in sorted_books]
+    expected_sorted_titles = sorted(sorted_titles)
+    assert (
+        sorted_titles == expected_sorted_titles
+    ), f"Expected order: {expected_sorted_titles}, got: {sorted_titles}"
+
+
+# Test for sorting books of an author by year_of_publication in descending order
+def test_sort_books_of_author_by_year_descending(client, create_sample_author):
+    author_id = create_sample_author["id"]
+    years = [1995, 2005, 1985]
+    created_ids = []
+    for idx, year in enumerate(years):
+        book_data = {
+            "title": f"Book {year}",
+            "description": f"Description for book published in {year}",
+            "year_of_publication": year,
+            "isbn": str(int("1234567890123") + idx + 10),
+            "series": "Sample Series",
+            "file_link": "https://example.com/sample.pdf",
+            "edition": "First",
+        }
+        response = client.post("/api/v1/books/", json=book_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        book_obj = response.json()
+        created_ids.append(book_obj["id"])
+        assoc_response = client.post(
+            f"/api/v1/authors/{author_id}/books/{book_obj['id']}"
+        )
+        assert assoc_response.status_code == status.HTTP_201_CREATED
+
+    response = client.get(
+        f"/api/v1/authors/{author_id}/books?sort_by=year_of_publication&sort_order=desc"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    books = response.json()["items"]
+
+    sorted_books = [book for book in books if book["id"] in created_ids]
+    sorted_years = [book["year_of_publication"] for book in sorted_books]
+    expected_sorted_years = sorted(sorted_years, reverse=True)
+    assert (
+        sorted_years == expected_sorted_years
+    ), f"Expected order: {expected_sorted_years}, got: {sorted_years}"
