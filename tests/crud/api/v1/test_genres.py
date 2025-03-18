@@ -2,6 +2,7 @@ import pytest
 from fastapi import HTTPException
 from app.crud.api.v1.genres import GenresCrud
 from app.schemas.api.v1.genre import CreateGenreSchema, UpdateGenreSchema
+from app.schemas.api.v1.book import BookSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.models.genre import Genre
 from app.models.book import Book
@@ -89,7 +90,9 @@ def test_remove_genre_not_found(genre_crud):
 # Positive case: Get books of a genre
 def test_get_books_of_genre(genre_crud, sample_genre, genre_book_association):
     pagination = PaginationParams(page=1, size=10)
-    books = genre_crud.get_books_of_genre(sample_genre.id, pagination)
+    books = genre_crud.get_books_of_genre(
+        sample_genre.id, pagination, BookSortingSchema()
+    )
     assert len(books.items) == 1
     assert books.items[0].title == "Sample Book"
 
@@ -99,7 +102,7 @@ def test_get_books_of_non_existent_genre(genre_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         genre_crud.get_books_of_genre(
-            999, pagination
+            999, pagination, BookSortingSchema()
         )  # Assuming genre ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Genre not found"

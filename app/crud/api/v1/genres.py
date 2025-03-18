@@ -9,6 +9,7 @@ from app.schemas.api.v1.genre import (
     UpdateGenreSchema,
     GenreSortingSchema,
 )
+from app.schemas.api.v1.book import BookSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.services.sorting import apply_sorting
 from app.crud.shared.db_utils import (
@@ -62,13 +63,31 @@ class GenresCrud:
         self.db.delete(genre)
         self.db.commit()
 
-    def get_books_of_genre(self, genre_id: int, pagination: PaginationParams):
+    def get_books_of_genre(
+        self,
+        genre_id: int,
+        pagination: PaginationParams,
+        sorting_params: BookSortingSchema,
+    ):
         self.get_genre_by_id(genre_id)
         stmt = (
             select(Book)
             .join(BookGenre, Book.id == BookGenre.book_id)
             .where(BookGenre.genre_id == genre_id)
         )
+        if sorting_params.sort_by:
+            sort_fields = {
+                "title": Book.title,
+                "description": Book.description,
+                "year_of_publication": Book.year_of_publication,
+                "isbn": Book.isbn,
+                "series": Book.series,
+                "file_link": Book.file_link,
+                "edition": Book.edition,
+                "created_at": Book.created_at,
+                "updated_at": Book.updated_at,
+            }
+            stmt = apply_sorting(stmt, sorting_params, sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def create_genre_book_association(self, genre_id: int, book_id: int):
