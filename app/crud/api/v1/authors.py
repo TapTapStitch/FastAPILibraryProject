@@ -1,11 +1,16 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, select
+from sqlalchemy import select
 from app.services.pagination import paginate
 from app.models.book import Book
 from app.models.author import Author
 from app.models.book_author import BookAuthor
-from app.schemas.api.v1.author import CreateAuthorSchema, UpdateAuthorSchema
+from app.schemas.api.v1.author import (
+    CreateAuthorSchema,
+    UpdateAuthorSchema,
+    AuthorSortingSchema,
+)
 from app.schemas.pagination import PaginationParams
+from app.services.sorting import apply_sorting
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_association_does_not_exist,
@@ -16,9 +21,21 @@ from app.crud.shared.db_utils import (
 class AuthorsCrud:
     def __init__(self, db: Session):
         self.db = db
+        self.sort_fields = {
+            "name": Author.name,
+            "surname": Author.surname,
+            "year_of_birth": Author.year_of_birth,
+            "biography": Author.biography,
+            "created_at": Author.created_at,
+            "updated_at": Author.updated_at,
+        }
 
-    def get_authors(self, pagination: PaginationParams):
-        stmt = select(Author).order_by(desc(Author.created_at))
+    def get_authors(
+        self, pagination: PaginationParams, sorting_params: AuthorSortingSchema
+    ):
+        stmt = select(Author)
+        if sorting_params.sort_by:
+            stmt = apply_sorting(stmt, sorting_params, self.sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_author_by_id(self, author_id: int):

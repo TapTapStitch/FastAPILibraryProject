@@ -5,6 +5,7 @@ from app.schemas.api.v1.author import (
     AuthorSchema,
     CreateAuthorSchema,
     UpdateAuthorSchema,
+    AuthorSortingSchema,
 )
 
 
@@ -56,3 +57,23 @@ def test_update_author_schema():
     # Invalid year of birth
     with pytest.raises(ValidationError):
         UpdateAuthorSchema(year_of_birth=999)  # Invalid year
+
+
+@pytest.mark.parametrize(
+    "params, is_valid",
+    [
+        ({"sort_by": "name", "sort_order": "asc"}, True),
+        ({"sort_by": "year_of_birth", "sort_order": "desc"}, True),
+        ({"sort_by": None, "sort_order": None}, True),
+        ({"sort_by": "invalid_field", "sort_order": "asc"}, False),
+        ({"sort_by": "name", "sort_order": "invalid_order"}, False),
+    ],
+)
+def test_author_sorting_schema(params, is_valid):
+    if is_valid:
+        schema = AuthorSortingSchema(**params)
+        assert schema.sort_by == params["sort_by"]
+        assert schema.sort_order == params["sort_order"]
+    else:
+        with pytest.raises(ValidationError):
+            AuthorSortingSchema(**params)

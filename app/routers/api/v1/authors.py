@@ -3,6 +3,7 @@ from app.schemas.api.v1.author import (
     AuthorSchema,
     CreateAuthorSchema,
     UpdateAuthorSchema,
+    AuthorSortingSchema,
 )
 from app.schemas.api.v1.book import BookSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
@@ -19,10 +20,11 @@ router = APIRouter()
 
 @router.get("/", response_model=PaginatedResponse[AuthorSchema])
 async def get_authors(
+    sorting_params: AuthorSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: AuthorsCrud = Depends(get_authors_crud),
 ):
-    return crud.get_authors(pagination=pagination)
+    return crud.get_authors(pagination=pagination, sorting_params=sorting_params)
 
 
 @router.get(

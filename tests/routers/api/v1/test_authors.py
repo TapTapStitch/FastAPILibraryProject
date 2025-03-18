@@ -218,3 +218,55 @@ def test_delete_association_nonexistent_book(client, create_sample_author):
     response = client.delete(f"/api/v1/authors/{author_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
+
+
+def test_sort_authors_by_name_ascending(client):
+    names = ["TestName C", "TestName A", "TestName B"]
+    created_ids = []
+    for idx, name in enumerate(names):
+        author_data = {
+            "name": name,
+            "surname": f"Surname {idx}",
+            "year_of_birth": 1980 + idx,
+            "biography": f"Biography of {name}",
+        }
+        response = client.post("/api/v1/authors/", json=author_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/authors/?sort_by=name&sort_order=asc")
+    assert response.status_code == status.HTTP_200_OK
+    authors = response.json()["items"]
+
+    sorted_authors = [author for author in authors if author["id"] in created_ids]
+    sorted_names = [author["name"] for author in sorted_authors]
+    expected_order = sorted(sorted_names)
+    assert (
+        sorted_names == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_names}"
+
+
+def test_sort_authors_by_year_descending(client):
+    years = [1975, 1990, 1980]
+    created_ids = []
+    for idx, year in enumerate(years):
+        author_data = {
+            "name": f"Author {year}",
+            "surname": "Test",
+            "year_of_birth": year,
+            "biography": f"Biography for author born in {year}",
+        }
+        response = client.post("/api/v1/authors/", json=author_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/authors/?sort_by=year_of_birth&sort_order=desc")
+    assert response.status_code == status.HTTP_200_OK
+    authors = response.json()["items"]
+
+    sorted_authors = [author for author in authors if author["id"] in created_ids]
+    sorted_years = [author["year_of_birth"] for author in sorted_authors]
+    expected_order = sorted(sorted_years, reverse=True)
+    assert (
+        sorted_years == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_years}"
