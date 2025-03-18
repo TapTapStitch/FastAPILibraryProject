@@ -1,13 +1,18 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, select
+from sqlalchemy import select
 from app.services.pagination import paginate
 from app.models.book import Book
 from app.models.author import Author
 from app.models.book_author import BookAuthor
 from app.models.genre import Genre
 from app.models.book_genre import BookGenre
-from app.schemas.api.v1.book import CreateBookSchema, UpdateBookSchema
+from app.schemas.api.v1.book import (
+    CreateBookSchema,
+    UpdateBookSchema,
+    BookSortingSchema,
+)
 from app.schemas.pagination import PaginationParams
+from app.services.sorting import apply_sorting
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_unique,
@@ -19,9 +24,24 @@ from app.crud.shared.db_utils import (
 class BooksCrud:
     def __init__(self, db: Session):
         self.db = db
+        self.sort_fields = {
+            "title": Book.title,
+            "description": Book.description,
+            "year_of_publication": Book.year_of_publication,
+            "isbn": Book.isbn,
+            "series": Book.series,
+            "file_link": Book.file_link,
+            "edition": Book.edition,
+            "created_at": Book.created_at,
+            "updated_at": Book.updated_at,
+        }
 
-    def get_books(self, pagination: PaginationParams):
-        stmt = select(Book).order_by(desc(Book.created_at))
+    def get_books(
+        self, pagination: PaginationParams, sorting_params: BookSortingSchema
+    ):
+        stmt = select(Book)
+        if sorting_params.sort_by:
+            stmt = apply_sorting(stmt, sorting_params, self.sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_book_by_id(self, book_id: int):

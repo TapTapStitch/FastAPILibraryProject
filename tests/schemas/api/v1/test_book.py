@@ -5,6 +5,7 @@ from app.schemas.api.v1.book import (
     BookSchema,
     CreateBookSchema,
     UpdateBookSchema,
+    BookSortingSchema,
 )
 
 
@@ -72,3 +73,23 @@ def test_update_book_schema():
     # Invalid ISBN
     with pytest.raises(ValidationError):
         UpdateBookSchema(title="Advanced Python", isbn="123")  # Invalid ISBN
+
+
+@pytest.mark.parametrize(
+    "params, is_valid",
+    [
+        ({"sort_by": "title", "sort_order": "asc"}, True),
+        ({"sort_by": "year_of_publication", "sort_order": "desc"}, True),
+        ({"sort_by": None, "sort_order": None}, True),
+        ({"sort_by": "invalid_field", "sort_order": "asc"}, False),
+        ({"sort_by": "title", "sort_order": "invalid_order"}, False),
+    ],
+)
+def test_book_sorting_schema(params, is_valid):
+    if is_valid:
+        schema = BookSortingSchema(**params)
+        assert schema.sort_by == params["sort_by"]
+        assert schema.sort_order == params["sort_order"]
+    else:
+        with pytest.raises(ValidationError):
+            BookSortingSchema(**params)

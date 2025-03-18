@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-
+from typing import Literal
+from pydantic import BaseModel, Field, ConfigDict
+from fastapi import Query
 
 YearField = Field(..., ge=1000, le=9999)
 ISBNField = Field(..., min_length=13, max_length=13, pattern=r"^\d{13}$")
@@ -41,3 +42,21 @@ class UpdateBookSchema(BaseModel):
     edition: str | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+
+class BookSortingSchema(BaseModel):
+    sort_by: (
+        Literal[
+            "title",
+            "description",
+            "year_of_publication",
+            "isbn",
+            "series",
+            "file_link",
+            "edition",
+            "created_at",
+            "updated_at",
+        ]
+        | None
+    ) = Query(None)
+    sort_order: Literal["asc", "desc"] | None = Query(None)

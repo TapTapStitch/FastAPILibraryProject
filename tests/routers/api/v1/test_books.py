@@ -339,3 +339,51 @@ def test_delete_book_genre_association_nonexistent_genre(client, create_sample_b
     response = client.delete(f"/api/v1/books/{book_id}/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
+
+
+def test_sort_books_by_title_ascending(client):
+    titles = ["TestTitle C", "TestTitle A", "TestTitle B"]
+    created_ids = []
+    for idx, title in enumerate(titles):
+        book_data = valid_book_data.copy()
+        book_data["title"] = title
+        book_data["isbn"] = str(int(valid_book_data["isbn"]) + idx + 1)
+        response = client.post("/api/v1/books/", json=book_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/books/?sort_by=title&sort_order=asc")
+    assert response.status_code == status.HTTP_200_OK
+    books = response.json()["items"]
+
+    sorted_books = [book for book in books if book["id"] in created_ids]
+    sorted_titles = [book["title"] for book in sorted_books]
+    expected_order = sorted(sorted_titles)
+    assert (
+        sorted_titles == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_titles}"
+
+
+def test_sort_books_by_year_descending(client):
+    years = [1990, 2000, 1980]
+    created_ids = []
+    for idx, year in enumerate(years):
+        book_data = valid_book_data.copy()
+        book_data["title"] = f"TestYearBook {year}"
+        book_data["year_of_publication"] = year
+
+        book_data["isbn"] = str(int(valid_book_data["isbn"]) + (idx + 10))
+        response = client.post("/api/v1/books/", json=book_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/books/?sort_by=year_of_publication&sort_order=desc")
+    assert response.status_code == status.HTTP_200_OK
+    books = response.json()["items"]
+
+    sorted_books = [book for book in books if book["id"] in created_ids]
+    sorted_years = [book["year_of_publication"] for book in sorted_books]
+    expected_order = sorted(sorted_years, reverse=True)
+    assert (
+        sorted_years == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_years}"

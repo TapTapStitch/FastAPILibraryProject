@@ -1,5 +1,10 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.api.v1.book import BookSchema, CreateBookSchema, UpdateBookSchema
+from app.schemas.api.v1.book import (
+    BookSchema,
+    CreateBookSchema,
+    UpdateBookSchema,
+    BookSortingSchema,
+)
 from app.schemas.api.v1.author import AuthorSchema
 from app.schemas.api.v1.genre import GenreSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
@@ -16,9 +21,11 @@ router = APIRouter()
 
 @router.get("/", response_model=PaginatedResponse[BookSchema])
 async def get_books(
-    pagination: PaginationParams = Depends(), crud: BooksCrud = Depends(get_books_crud)
+    sorting_params: BookSortingSchema = Depends(),
+    pagination: PaginationParams = Depends(),
+    crud: BooksCrud = Depends(get_books_crud),
 ):
-    return crud.get_books(pagination=pagination)
+    return crud.get_books(pagination=pagination, sorting_params=sorting_params)
 
 
 @router.get(
