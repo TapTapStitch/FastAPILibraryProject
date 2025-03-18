@@ -5,8 +5,8 @@ from app.schemas.api.v1.book import (
     UpdateBookSchema,
     BookSortingSchema,
 )
-from app.schemas.api.v1.author import AuthorSchema
-from app.schemas.api.v1.genre import GenreSchema
+from app.schemas.api.v1.author import AuthorSchema, AuthorSortingSchema
+from app.schemas.api.v1.genre import GenreSchema, GenreSortingSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.books import BooksCrud
 from app.routers.shared.response_templates import (
@@ -73,10 +73,13 @@ async def delete_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
 )
 def get_authors_of_book(
     book_id: int,
+    sorting_params: AuthorSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
 ):
-    return crud.get_authors_of_book(book_id=book_id, pagination=pagination)
+    return crud.get_authors_of_book(
+        book_id=book_id, pagination=pagination, sorting_params=sorting_params
+    )
 
 
 @router.post(
@@ -118,10 +121,13 @@ async def delete_book_author_association(
 )
 def get_genres_of_book(
     book_id: int,
+    sorting_params: GenreSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
 ):
-    return crud.get_genres_of_book(book_id=book_id, pagination=pagination)
+    return crud.get_genres_of_book(
+        book_id=book_id, pagination=pagination, sorting_params=sorting_params
+    )
 
 
 @router.post(

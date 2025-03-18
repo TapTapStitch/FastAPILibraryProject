@@ -2,6 +2,8 @@ import pytest
 from fastapi import HTTPException
 from app.crud.api.v1.books import BooksCrud
 from app.schemas.api.v1.book import CreateBookSchema, UpdateBookSchema
+from app.schemas.api.v1.genre import GenreSortingSchema
+from app.schemas.api.v1.author import AuthorSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.models.book import Book
 from app.models.author import Author
@@ -158,7 +160,9 @@ def test_remove_book_not_found(book_crud):
 # Positive case: Get authors of a book
 def test_get_authors_of_book(book_crud, sample_book, book_author_association):
     pagination = PaginationParams(page=1, size=10)
-    authors = book_crud.get_authors_of_book(sample_book.id, pagination)
+    authors = book_crud.get_authors_of_book(
+        sample_book.id, pagination, AuthorSortingSchema()
+    )
     assert len(authors.items) == 1
     assert authors.items[0].name == "Sample Author"
 
@@ -168,7 +172,7 @@ def test_get_authors_of_non_existent_book(book_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         book_crud.get_authors_of_book(
-            999, pagination
+            999, pagination, AuthorSortingSchema()
         )  # Assuming book ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Book not found"
@@ -266,7 +270,9 @@ def test_get_genres_of_book(
     book_crud, sample_book, sample_genre, sample_book_genre_association
 ):
     pagination = PaginationParams(page=1, size=10)
-    genres = book_crud.get_genres_of_book(sample_book.id, pagination)
+    genres = book_crud.get_genres_of_book(
+        sample_book.id, pagination, GenreSortingSchema()
+    )
     assert len(genres.items) == 1
     assert genres.items[0].name == "Fiction"
 
@@ -276,7 +282,7 @@ def test_get_genres_of_non_existent_book(book_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         book_crud.get_genres_of_book(
-            999, pagination
+            999, pagination, GenreSortingSchema()
         )  # Assuming book ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Book not found"

@@ -387,3 +387,124 @@ def test_sort_books_by_year_descending(client):
     assert (
         sorted_years == expected_order
     ), f"Expected order: {expected_order}, got: {sorted_years}"
+
+
+# Test for sorting authors by name in ascending order for a given book
+def test_sort_authors_by_name_ascending(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    authors = [
+        {"name": "Charlie", "surname": "Smith", "year_of_birth": 1970},
+        {"name": "Alice", "surname": "Johnson", "year_of_birth": 1985},
+        {"name": "Bob", "surname": "Williams", "year_of_birth": 1990},
+    ]
+    created_author_ids = []
+    for author in authors:
+        response = client.post("/api/v1/authors/", json=author)
+        assert response.status_code == status.HTTP_201_CREATED
+        author_obj = response.json()
+        created_author_ids.append(author_obj["id"])
+        resp_assoc = client.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
+        assert resp_assoc.status_code == status.HTTP_201_CREATED
+
+    response = client.get(
+        f"/api/v1/books/{book_id}/authors?sort_by=name&sort_order=asc"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_authors = response.json()["items"]
+    filtered_authors = [a for a in result_authors if a["id"] in created_author_ids]
+    sorted_names = [author["name"] for author in filtered_authors]
+    expected_sorted_names = sorted(sorted_names)
+    assert (
+        sorted_names == expected_sorted_names
+    ), f"Expected order: {expected_sorted_names}, got: {sorted_names}"
+
+
+# Test for sorting authors by year_of_birth in descending order for a given book
+def test_sort_authors_by_year_of_birth_descending(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    authors = [
+        {"name": "Author A", "surname": "X", "year_of_birth": 1960},
+        {"name": "Author B", "surname": "Y", "year_of_birth": 1980},
+        {"name": "Author C", "surname": "Z", "year_of_birth": 1970},
+    ]
+    created_author_ids = []
+    for author in authors:
+        response = client.post("/api/v1/authors/", json=author)
+        assert response.status_code == status.HTTP_201_CREATED
+        author_obj = response.json()
+        created_author_ids.append(author_obj["id"])
+        resp_assoc = client.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
+        assert resp_assoc.status_code == status.HTTP_201_CREATED
+
+    response = client.get(
+        f"/api/v1/books/{book_id}/authors?sort_by=year_of_birth&sort_order=desc"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_authors = response.json()["items"]
+
+    filtered_authors = [a for a in result_authors if a["id"] in created_author_ids]
+    sorted_years = [author["year_of_birth"] for author in filtered_authors]
+    expected_sorted_years = sorted(sorted_years, reverse=True)
+    assert (
+        sorted_years == expected_sorted_years
+    ), f"Expected order: {expected_sorted_years}, got: {sorted_years}"
+
+
+# Test for sorting genres by name in ascending order for a given book
+def test_sort_genres_by_name_ascending(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    genres = [
+        {"name": "Mystery"},
+        {"name": "Adventure"},
+        {"name": "Biography"},
+    ]
+    created_genre_ids = []
+    for genre in genres:
+        response = client.post("/api/v1/genres/", json=genre)
+        assert response.status_code == status.HTTP_201_CREATED
+        genre_obj = response.json()
+        created_genre_ids.append(genre_obj["id"])
+        resp_assoc = client.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
+        assert resp_assoc.status_code == status.HTTP_201_CREATED
+
+    response = client.get(f"/api/v1/books/{book_id}/genres?sort_by=name&sort_order=asc")
+    assert response.status_code == status.HTTP_200_OK
+    result_genres = response.json()["items"]
+
+    filtered_genres = [g for g in result_genres if g["id"] in created_genre_ids]
+    sorted_names = [genre["name"] for genre in filtered_genres]
+    expected_sorted_names = sorted(sorted_names)
+    assert (
+        sorted_names == expected_sorted_names
+    ), f"Expected order: {expected_sorted_names}, got: {sorted_names}"
+
+
+# Test for sorting genres by name in descending order for a given book
+def test_sort_genres_by_name_descending(client, create_sample_book):
+    book_id = create_sample_book["id"]
+    genres = [
+        {"name": "Romance"},
+        {"name": "Horror"},
+        {"name": "Sci-Fi"},
+    ]
+    created_genre_ids = []
+    for genre in genres:
+        response = client.post("/api/v1/genres/", json=genre)
+        assert response.status_code == status.HTTP_201_CREATED
+        genre_obj = response.json()
+        created_genre_ids.append(genre_obj["id"])
+        resp_assoc = client.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
+        assert resp_assoc.status_code == status.HTTP_201_CREATED
+
+    response = client.get(
+        f"/api/v1/books/{book_id}/genres?sort_by=name&sort_order=desc"
+    )
+    assert response.status_code == status.HTTP_200_OK
+    result_genres = response.json()["items"]
+
+    filtered_genres = [g for g in result_genres if g["id"] in created_genre_ids]
+    sorted_names = [genre["name"] for genre in filtered_genres]
+    expected_sorted_names = sorted(sorted_names, reverse=True)
+    assert (
+        sorted_names == expected_sorted_names
+    ), f"Expected order: {expected_sorted_names}, got: {sorted_names}"
