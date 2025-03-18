@@ -200,3 +200,51 @@ def test_delete_association_nonexistent_book(client, create_sample_genre):
     response = client.delete(f"/api/v1/genres/{genre_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
+
+
+def test_sort_genres_by_name_ascending(client):
+    names = ["Mystery", "Biography", "Fiction"]
+    created_ids = []
+    for idx, name in enumerate(names):
+        genre_data = {
+            "name": name,
+            "description": f"{name} description",
+        }
+        response = client.post("/api/v1/genres/", json=genre_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/genres/?sort_by=name&sort_order=asc")
+    assert response.status_code == status.HTTP_200_OK
+    genres = response.json()["items"]
+
+    sorted_genres = [genre for genre in genres if genre["id"] in created_ids]
+    sorted_names = [genre["name"] for genre in sorted_genres]
+    expected_order = sorted(sorted_names)
+    assert (
+        sorted_names == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_names}"
+
+
+def test_sort_genres_by_name_descending(client):
+    names = ["Mystery", "Biography", "Fiction"]
+    created_ids = []
+    for idx, name in enumerate(names):
+        genre_data = {
+            "name": name,
+            "description": f"{name} description",
+        }
+        response = client.post("/api/v1/genres/", json=genre_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        created_ids.append(response.json()["id"])
+
+    response = client.get("/api/v1/genres/?sort_by=name&sort_order=desc")
+    assert response.status_code == status.HTTP_200_OK
+    genres = response.json()["items"]
+
+    sorted_genres = [genre for genre in genres if genre["id"] in created_ids]
+    sorted_names = [genre["name"] for genre in sorted_genres]
+    expected_order = sorted(sorted_names, reverse=True)
+    assert (
+        sorted_names == expected_order
+    ), f"Expected order: {expected_order}, got: {sorted_names}"

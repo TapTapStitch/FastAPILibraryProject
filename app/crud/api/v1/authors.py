@@ -21,21 +21,21 @@ from app.crud.shared.db_utils import (
 class AuthorsCrud:
     def __init__(self, db: Session):
         self.db = db
-        self.sort_fields = {
-            "name": Author.name,
-            "surname": Author.surname,
-            "year_of_birth": Author.year_of_birth,
-            "biography": Author.biography,
-            "created_at": Author.created_at,
-            "updated_at": Author.updated_at,
-        }
 
     def get_authors(
         self, pagination: PaginationParams, sorting_params: AuthorSortingSchema
     ):
         stmt = select(Author)
         if sorting_params.sort_by:
-            stmt = apply_sorting(stmt, sorting_params, self.sort_fields)
+            sort_fields = {
+                "name": Author.name,
+                "surname": Author.surname,
+                "year_of_birth": Author.year_of_birth,
+                "biography": Author.biography,
+                "created_at": Author.created_at,
+                "updated_at": Author.updated_at,
+            }
+            stmt = apply_sorting(stmt, sorting_params, sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_author_by_id(self, author_id: int):

@@ -5,6 +5,7 @@ from app.schemas.api.v1.genre import (
     GenreSchema,
     CreateGenreSchema,
     UpdateGenreSchema,
+    GenreSortingSchema,
 )
 
 
@@ -52,3 +53,23 @@ def test_update_genre_schema():
     # Extra fields should raise an error due to `extra="forbid"`
     with pytest.raises(ValidationError):
         UpdateGenreSchema(name="Horror", extra_field="Not allowed")
+
+
+@pytest.mark.parametrize(
+    "params, is_valid",
+    [
+        ({"sort_by": "name", "sort_order": "asc"}, True),
+        ({"sort_by": "description", "sort_order": "desc"}, True),
+        ({"sort_by": None, "sort_order": None}, True),
+        ({"sort_by": "invalid_field", "sort_order": "asc"}, False),
+        ({"sort_by": "name", "sort_order": "invalid_order"}, False),
+    ],
+)
+def test_genre_sorting_schema(params, is_valid):
+    if is_valid:
+        schema = GenreSortingSchema(**params)
+        assert schema.sort_by == params["sort_by"]
+        assert schema.sort_order == params["sort_order"]
+    else:
+        with pytest.raises(ValidationError):
+            GenreSortingSchema(**params)

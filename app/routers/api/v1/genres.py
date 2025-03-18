@@ -1,5 +1,10 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.api.v1.genre import GenreSchema, CreateGenreSchema, UpdateGenreSchema
+from app.schemas.api.v1.genre import (
+    GenreSchema,
+    CreateGenreSchema,
+    UpdateGenreSchema,
+    GenreSortingSchema,
+)
 from app.schemas.api.v1.book import BookSchema
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.genres import GenresCrud
@@ -15,10 +20,11 @@ router = APIRouter()
 
 @router.get("/", response_model=PaginatedResponse[GenreSchema])
 async def get_genres(
+    sorting_params: GenreSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: GenresCrud = Depends(get_genres_crud),
 ):
-    return crud.get_genres(pagination=pagination)
+    return crud.get_genres(pagination=pagination, sorting_params=sorting_params)
 
 
 @router.get(

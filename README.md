@@ -6,6 +6,7 @@ FastApiLibraryProject is a web application designed to manage a library system e
 
 - **Book Management:** Add, update, delete, and search for books.
 - **Author Management:** Manage author information and their associated works.
+- **Genre Management:** Categorize books by genre for easy access.
 - **User Authentication:** Secure user login and registration system.
 - **Search Functionality:** Advanced search options for books and authors.
 

@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import Literal
+from pydantic import BaseModel, ConfigDict
+from fastapi import Query
 
 
 class GenreSchema(BaseModel):
@@ -22,3 +24,16 @@ class UpdateGenreSchema(BaseModel):
     description: str | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+
+class GenreSortingSchema(BaseModel):
+    sort_by: (
+        Literal[
+            "name",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+        | None
+    ) = Query(None)
+    sort_order: Literal["asc", "desc"] | None = Query(None)

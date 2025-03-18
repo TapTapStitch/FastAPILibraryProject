@@ -1,11 +1,16 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, select
+from sqlalchemy import select
 from app.services.pagination import paginate
 from app.models.genre import Genre
 from app.models.book import Book
 from app.models.book_genre import BookGenre
-from app.schemas.api.v1.genre import CreateGenreSchema, UpdateGenreSchema
+from app.schemas.api.v1.genre import (
+    CreateGenreSchema,
+    UpdateGenreSchema,
+    GenreSortingSchema,
+)
 from app.schemas.pagination import PaginationParams
+from app.services.sorting import apply_sorting
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_association_does_not_exist,
@@ -17,8 +22,18 @@ class GenresCrud:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_genres(self, pagination: PaginationParams):
-        stmt = select(Genre).order_by(desc(Genre.created_at))
+    def get_genres(
+        self, pagination: PaginationParams, sorting_params: GenreSortingSchema
+    ):
+        stmt = select(Genre)
+        if sorting_params.sort_by:
+            sort_fields = {
+                "name": Genre.name,
+                "description": Genre.description,
+                "created_at": Genre.created_at,
+                "updated_at": Genre.updated_at,
+            }
+            stmt = apply_sorting(stmt, sorting_params, sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_genre_by_id(self, genre_id: int):
