@@ -17,6 +17,7 @@ from app.crud.shared.db_utils import (
     ensure_association_does_not_exist,
     fetch_association,
 )
+from app.crud.api.v1.shared.sort_fields import book_sort_fields, genre_sort_fields
 
 
 class GenresCrud:
@@ -28,13 +29,7 @@ class GenresCrud:
     ):
         stmt = select(Genre)
         if sorting_params.sort_by:
-            sort_fields = {
-                "name": Genre.name,
-                "description": Genre.description,
-                "created_at": Genre.created_at,
-                "updated_at": Genre.updated_at,
-            }
-            stmt = apply_sorting(stmt, sorting_params, sort_fields)
+            stmt = apply_sorting(stmt, sorting_params, genre_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_genre_by_id(self, genre_id: int):
@@ -76,18 +71,7 @@ class GenresCrud:
             .where(BookGenre.genre_id == genre_id)
         )
         if sorting_params.sort_by:
-            sort_fields = {
-                "title": Book.title,
-                "description": Book.description,
-                "year_of_publication": Book.year_of_publication,
-                "isbn": Book.isbn,
-                "series": Book.series,
-                "file_link": Book.file_link,
-                "edition": Book.edition,
-                "created_at": Book.created_at,
-                "updated_at": Book.updated_at,
-            }
-            stmt = apply_sorting(stmt, sorting_params, sort_fields)
+            stmt = apply_sorting(stmt, sorting_params, book_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def create_genre_book_association(self, genre_id: int, book_id: int):

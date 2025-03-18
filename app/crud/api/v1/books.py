@@ -21,6 +21,11 @@ from app.crud.shared.db_utils import (
     ensure_association_does_not_exist,
     fetch_association,
 )
+from app.crud.api.v1.shared.sort_fields import (
+    book_sort_fields,
+    author_sort_fields,
+    genre_sort_fields,
+)
 
 
 class BooksCrud:
@@ -32,18 +37,7 @@ class BooksCrud:
     ):
         stmt = select(Book)
         if sorting_params.sort_by:
-            sort_fields = {
-                "title": Book.title,
-                "description": Book.description,
-                "year_of_publication": Book.year_of_publication,
-                "isbn": Book.isbn,
-                "series": Book.series,
-                "file_link": Book.file_link,
-                "edition": Book.edition,
-                "created_at": Book.created_at,
-                "updated_at": Book.updated_at,
-            }
-            stmt = apply_sorting(stmt, sorting_params, sort_fields)
+            stmt = apply_sorting(stmt, sorting_params, book_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def get_book_by_id(self, book_id: int):
@@ -91,15 +85,7 @@ class BooksCrud:
             .where(BookAuthor.book_id == book_id)
         )
         if sorting_params.sort_by:
-            sort_fields = {
-                "name": Author.name,
-                "surname": Author.surname,
-                "year_of_birth": Author.year_of_birth,
-                "biography": Author.biography,
-                "created_at": Author.created_at,
-                "updated_at": Author.updated_at,
-            }
-            stmt = apply_sorting(stmt, sorting_params, sort_fields)
+            stmt = apply_sorting(stmt, sorting_params, author_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def create_book_author_association(self, book_id: int, author_id: int):
@@ -137,13 +123,7 @@ class BooksCrud:
             .where(BookGenre.book_id == book_id)
         )
         if sorting_params.sort_by:
-            sort_fields = {
-                "name": Genre.name,
-                "description": Genre.description,
-                "created_at": Genre.created_at,
-                "updated_at": Genre.updated_at,
-            }
-            stmt = apply_sorting(stmt, sorting_params, sort_fields)
+            stmt = apply_sorting(stmt, sorting_params, genre_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
 
     def create_book_genre_association(self, book_id: int, genre_id: int):
