@@ -20,9 +20,9 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.10.0"
-pytest = "^8.3.4"
-pytest-cov = "^6.0.0"
+black = "^25.1.0"
+pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
 pytest-randomly = "^3.16.0"
 httpx = "^0.28.1"
-faker = "^33.3.1"
+Faker = "^37.1.0"
