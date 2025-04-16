@@ -7,6 +7,7 @@ from app.config import settings
 from app.models import *
 from app.main import app
 from app.services.authorization import get_current_user
+from app.routers.api.v1.shared.depends import get_librarian_user, get_admin_user
 
 
 @pytest.fixture(scope="session")
@@ -52,3 +53,39 @@ def authorized_client(client, session):
     app.dependency_overrides[get_current_user] = lambda: user
     yield client
     app.dependency_overrides.pop(get_current_user)
+
+
+@pytest.fixture(scope="function")
+def authorized_librarian(client, session):
+    librarian = User(
+        email="librarian@example.com",
+        hashed_password="some_hashed_password",
+        name="Librarian",
+        surname="Librarian",
+        avatar_link="https://example.com/avatar.jpg",
+        access_level=1,
+    )
+    session.add(librarian)
+    session.commit()
+    session.refresh(librarian)
+    app.dependency_overrides[get_librarian_user] = lambda: librarian
+    yield client
+    app.dependency_overrides.pop(get_librarian_user)
+
+
+@pytest.fixture(scope="function")
+def authorized_admin(client, session):
+    admin = User(
+        email="admin@example.com",
+        hashed_password="some_hashed_password",
+        name="Admin",
+        surname="Admin",
+        avatar_link="https://example.com/avatar.jpg",
+        access_level=2,
+    )
+    session.add(admin)
+    session.commit()
+    session.refresh(admin)
+    app.dependency_overrides[get_admin_user] = lambda: admin
+    yield client
+    app.dependency_overrides.pop(get_admin_user)

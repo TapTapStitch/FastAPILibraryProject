@@ -5,30 +5,30 @@ valid_genre_data = {"name": "Fiction"}
 
 
 @pytest.fixture
-def create_sample_genre(client):
-    response = client.post("/api/v1/genres/", json=valid_genre_data)
+def create_sample_genre(authorized_librarian):
+    response = authorized_librarian.post("/api/v1/genres/", json=valid_genre_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
 
 @pytest.fixture
-def create_sample_book(client):
+def create_sample_book(authorized_librarian):
     book_data = {
         "title": "Sample Book",
         "description": "Sample description",
         "year_of_publication": 2023,
         "isbn": "1234567890123",
     }
-    response = client.post("/api/v1/books/", json=book_data)
+    response = authorized_librarian.post("/api/v1/books/", json=book_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
 
 @pytest.fixture
-def associate_genre_and_book(client, create_sample_genre, create_sample_book):
+def associate_genre_and_book(authorized_librarian, create_sample_genre, create_sample_book):
     genre_id = create_sample_genre["id"]
     book_id = create_sample_book["id"]
-    response = client.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
+    response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
     assert response.status_code == status.HTTP_201_CREATED
     return {"genre_id": genre_id, "book_id": book_id}
 
@@ -56,52 +56,52 @@ def test_get_nonexistent_genre(client):
 
 
 # Test for creating a new genre
-def test_create_genre(client):
-    response = client.post("/api/v1/genres/", json=valid_genre_data)
+def test_create_genre(authorized_librarian):
+    response = authorized_librarian.post("/api/v1/genres/", json=valid_genre_data)
     assert response.status_code == status.HTTP_201_CREATED
     assert "id" in response.json()
     assert response.json()["name"] == valid_genre_data["name"]
 
 
 # Test for creating a genre with missing data
-def test_create_genre_with_missing_data(client):
+def test_create_genre_with_missing_data(authorized_librarian):
     invalid_genre_data = {}
-    response = client.post("/api/v1/genres/", json=invalid_genre_data)
+    response = authorized_librarian.post("/api/v1/genres/", json=invalid_genre_data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 # Test for updating a genre
-def test_update_genre(client, create_sample_genre):
+def test_update_genre(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
     updated_data = {"name": "Updated Genre"}
-    response = client.patch(f"/api/v1/genres/{genre_id}", json=updated_data)
+    response = authorized_librarian.patch(f"/api/v1/genres/{genre_id}", json=updated_data)
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["name"] == updated_data["name"]
 
 
 # Test for updating a non-existent genre
-def test_update_nonexistent_genre(client):
+def test_update_nonexistent_genre(authorized_librarian):
     updated_data = {"name": "Updated Genre"}
-    response = client.patch("/api/v1/genres/999999", json=updated_data)
+    response = authorized_librarian.patch("/api/v1/genres/999999", json=updated_data)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
 # Test for deleting a genre
-def test_delete_genre(client, create_sample_genre):
+def test_delete_genre(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/api/v1/genres/{genre_id}")
+    response = authorized_librarian.delete(f"/api/v1/genres/{genre_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Check if the genre is really deleted
-    response = client.get(f"/api/v1/genres/{genre_id}")
+    response = authorized_librarian.get(f"/api/v1/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
 # Test for attempting to delete a non-existent genre
-def test_delete_nonexistent_genre(client):
-    response = client.delete("/api/v1/genres/999999")
+def test_delete_nonexistent_genre(authorized_librarian):
+    response = authorized_librarian.delete("/api/v1/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
@@ -125,84 +125,84 @@ def test_get_books_of_nonexistent_genre(client):
 
 
 # Test for creating a genre-book association
-def test_create_genre_book_association(client, create_sample_genre, create_sample_book):
+def test_create_genre_book_association(authorized_librarian, create_sample_genre, create_sample_book):
     genre_id = create_sample_genre["id"]
     book_id = create_sample_book["id"]
-    response = client.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
+    response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
     assert response.status_code == status.HTTP_201_CREATED
 
     # Verify the association exists
-    response = client.get(f"/api/v1/genres/{genre_id}/books")
+    response = authorized_librarian.get(f"/api/v1/genres/{genre_id}/books")
     books = response.json()["items"]
     assert any(book["id"] == book_id for book in books)
 
 
 # Test for creating a duplicate genre-book association
-def test_create_duplicate_genre_book_association(client, associate_genre_and_book):
+def test_create_duplicate_genre_book_association(authorized_librarian, associate_genre_and_book):
     genre_id = associate_genre_and_book["genre_id"]
     book_id = associate_genre_and_book["book_id"]
-    response = client.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
+    response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Association already exists"}
 
 
 # Test for creating an association with a non-existent genre
-def test_create_association_nonexistent_genre(client, create_sample_book):
+def test_create_association_nonexistent_genre(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.post(f"/api/v1/genres/999999/books/{book_id}")
+    response = authorized_librarian.post(f"/api/v1/genres/999999/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
 # Test for creating an association with a non-existent book
-def test_create_association_nonexistent_book(client, create_sample_genre):
+def test_create_association_nonexistent_book(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/api/v1/genres/{genre_id}/books/999999")
+    response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for deleting a genre-book association
-def test_delete_genre_book_association(client, associate_genre_and_book):
+def test_delete_genre_book_association(authorized_librarian, associate_genre_and_book):
     genre_id = associate_genre_and_book["genre_id"]
     book_id = associate_genre_and_book["book_id"]
-    response = client.delete(f"/api/v1/genres/{genre_id}/books/{book_id}")
+    response = authorized_librarian.delete(f"/api/v1/genres/{genre_id}/books/{book_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Verify the association is removed
-    response = client.get(f"/api/v1/genres/{genre_id}/books")
+    response = authorized_librarian.get(f"/api/v1/genres/{genre_id}/books")
     books = response.json()["items"]
     assert not any(book["id"] == book_id for book in books)
 
 
 # Test for deleting a non-existent genre-book association
 def test_delete_nonexistent_genre_book_association(
-    client, create_sample_genre, create_sample_book
+    authorized_librarian, create_sample_genre, create_sample_book
 ):
     genre_id = create_sample_genre["id"]
     book_id = create_sample_book["id"]
-    response = client.delete(f"/api/v1/genres/{genre_id}/books/{book_id}")
+    response = authorized_librarian.delete(f"/api/v1/genres/{genre_id}/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Association not found"}
 
 
 # Test for deleting an association with a non-existent genre
-def test_delete_association_nonexistent_genre(client, create_sample_book):
+def test_delete_association_nonexistent_genre(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/api/v1/genres/999999/books/{book_id}")
+    response = authorized_librarian.delete(f"/api/v1/genres/999999/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
 # Test for deleting an association with a non-existent book
-def test_delete_association_nonexistent_book(client, create_sample_genre):
+def test_delete_association_nonexistent_book(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/api/v1/genres/{genre_id}/books/999999")
+    response = authorized_librarian.delete(f"/api/v1/genres/{genre_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
-def test_sort_genres_by_name_ascending(client):
+def test_sort_genres_by_name_ascending(authorized_librarian):
     names = ["Mystery", "Biography", "Fiction"]
     created_ids = []
     for idx, name in enumerate(names):
@@ -210,11 +210,11 @@ def test_sort_genres_by_name_ascending(client):
             "name": name,
             "description": f"{name} description",
         }
-        response = client.post("/api/v1/genres/", json=genre_data)
+        response = authorized_librarian.post("/api/v1/genres/", json=genre_data)
         assert response.status_code == status.HTTP_201_CREATED
         created_ids.append(response.json()["id"])
 
-    response = client.get("/api/v1/genres/?sort_by=name&sort_order=asc")
+    response = authorized_librarian.get("/api/v1/genres/?sort_by=name&sort_order=asc")
     assert response.status_code == status.HTTP_200_OK
     genres = response.json()["items"]
 
@@ -226,7 +226,7 @@ def test_sort_genres_by_name_ascending(client):
     ), f"Expected order: {expected_order}, got: {sorted_names}"
 
 
-def test_sort_genres_by_name_descending(client):
+def test_sort_genres_by_name_descending(authorized_librarian):
     names = ["Mystery", "Biography", "Fiction"]
     created_ids = []
     for idx, name in enumerate(names):
@@ -234,11 +234,11 @@ def test_sort_genres_by_name_descending(client):
             "name": name,
             "description": f"{name} description",
         }
-        response = client.post("/api/v1/genres/", json=genre_data)
+        response = authorized_librarian.post("/api/v1/genres/", json=genre_data)
         assert response.status_code == status.HTTP_201_CREATED
         created_ids.append(response.json()["id"])
 
-    response = client.get("/api/v1/genres/?sort_by=name&sort_order=desc")
+    response = authorized_librarian.get("/api/v1/genres/?sort_by=name&sort_order=desc")
     assert response.status_code == status.HTTP_200_OK
     genres = response.json()["items"]
 
@@ -251,7 +251,7 @@ def test_sort_genres_by_name_descending(client):
 
 
 # Test for sorting books of a genre by title in ascending order
-def test_sort_books_of_genre_by_title_ascending(client, create_sample_genre):
+def test_sort_books_of_genre_by_title_ascending(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
     titles = ["Alpha", "Charlie", "Bravo"]
     created_ids = []
@@ -265,16 +265,16 @@ def test_sort_books_of_genre_by_title_ascending(client, create_sample_genre):
             "file_link": "https://example.com/sample.pdf",
             "edition": "First",
         }
-        response = client.post("/api/v1/books/", json=book_data)
+        response = authorized_librarian.post("/api/v1/books/", json=book_data)
         assert response.status_code == status.HTTP_201_CREATED
         book_obj = response.json()
         created_ids.append(book_obj["id"])
-        assoc_response = client.post(
+        assoc_response = authorized_librarian.post(
             f"/api/v1/genres/{genre_id}/books/{book_obj['id']}"
         )
         assert assoc_response.status_code == status.HTTP_201_CREATED
 
-    response = client.get(
+    response = authorized_librarian.get(
         f"/api/v1/genres/{genre_id}/books?sort_by=title&sort_order=asc"
     )
     assert response.status_code == status.HTTP_200_OK
@@ -288,7 +288,7 @@ def test_sort_books_of_genre_by_title_ascending(client, create_sample_genre):
 
 
 # Test for sorting books of a genre by year_of_publication in descending order
-def test_sort_books_of_genre_by_year_descending(client, create_sample_genre):
+def test_sort_books_of_genre_by_year_descending(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
     years = [1995, 2005, 1985]
     created_ids = []
@@ -302,16 +302,16 @@ def test_sort_books_of_genre_by_year_descending(client, create_sample_genre):
             "file_link": "https://example.com/sample.pdf",
             "edition": "First",
         }
-        response = client.post("/api/v1/books/", json=book_data)
+        response = authorized_librarian.post("/api/v1/books/", json=book_data)
         assert response.status_code == status.HTTP_201_CREATED
         book_obj = response.json()
         created_ids.append(book_obj["id"])
-        assoc_response = client.post(
+        assoc_response = authorized_librarian.post(
             f"/api/v1/genres/{genre_id}/books/{book_obj['id']}"
         )
         assert assoc_response.status_code == status.HTTP_201_CREATED
 
-    response = client.get(
+    response = authorized_librarian.get(
         f"/api/v1/genres/{genre_id}/books?sort_by=year_of_publication&sort_order=desc"
     )
     assert response.status_code == status.HTTP_200_OK

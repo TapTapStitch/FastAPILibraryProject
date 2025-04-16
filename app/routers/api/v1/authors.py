@@ -11,9 +11,10 @@ from app.crud.api.v1.authors import AuthorsCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
+    invalid_authentication_responses,
     combine_responses,
 )
-from app.routers.api.v1.shared.depends import get_authors_crud
+from app.routers.api.v1.shared.depends import get_authors_crud, get_librarian_user
 
 router = APIRouter()
 
@@ -34,26 +35,48 @@ async def get_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_cru
     return crud.get_author_by_id(author_id=author_id)
 
 
-@router.post("/", response_model=AuthorSchema, status_code=201)
+@router.post(
+    "/",
+    response_model=AuthorSchema,
+    status_code=201,
+    responses=invalid_authentication_responses(),
+)
 async def create_author(
-    author: CreateAuthorSchema, crud: AuthorsCrud = Depends(get_authors_crud)
+    author: CreateAuthorSchema,
+    crud: AuthorsCrud = Depends(get_authors_crud),
+    current_user=Depends(get_librarian_user),
 ):
     return crud.create_author(author_data=author)
 
 
 @router.patch(
-    "/{author_id}", response_model=AuthorSchema, responses=not_found_response("author")
+    "/{author_id}",
+    response_model=AuthorSchema,
+    responses=combine_responses(
+        not_found_response("author"), invalid_authentication_responses()
+    ),
 )
 async def update_author(
     author_id: int,
     author: UpdateAuthorSchema,
     crud: AuthorsCrud = Depends(get_authors_crud),
+    current_user=Depends(get_librarian_user),
 ):
     return crud.update_author(author_id=author_id, author_data=author)
 
 
-@router.delete("/{author_id}", status_code=204, responses=not_found_response("author"))
-async def delete_author(author_id: int, crud: AuthorsCrud = Depends(get_authors_crud)):
+@router.delete(
+    "/{author_id}",
+    status_code=204,
+    responses=combine_responses(
+        not_found_response("author"), invalid_authentication_responses()
+    ),
+)
+async def delete_author(
+    author_id: int,
+    crud: AuthorsCrud = Depends(get_authors_crud),
+    current_user=Depends(get_librarian_user),
+):
     crud.remove_author(author_id=author_id)
     return Response(status_code=204)
 
@@ -81,10 +104,14 @@ def get_books_of_author(
         not_found_response("author"),
         not_found_response("book"),
         bad_request_response("Association already exists"),
+        invalid_authentication_responses(),
     ),
 )
 def create_author_book_association(
-    author_id: int, book_id: int, crud: AuthorsCrud = Depends(get_authors_crud)
+    author_id: int,
+    book_id: int,
+    crud: AuthorsCrud = Depends(get_authors_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.create_author_book_association(author_id=author_id, book_id=book_id)
     return Response(status_code=201)
@@ -97,10 +124,14 @@ def create_author_book_association(
         not_found_response("author"),
         not_found_response("book"),
         not_found_response("association"),
+        invalid_authentication_responses(),
     ),
 )
 async def delete_author_book_association(
-    author_id: int, book_id: int, crud: AuthorsCrud = Depends(get_authors_crud)
+    author_id: int,
+    book_id: int,
+    crud: AuthorsCrud = Depends(get_authors_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.remove_author_book_association(author_id=author_id, book_id=book_id)
     return Response(status_code=204)

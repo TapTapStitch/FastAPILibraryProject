@@ -27,12 +27,6 @@ def bad_request_response(detail: str):
 
 def invalid_authentication_responses():
     return {
-        "403": {
-            "description": "Forbidden",
-            "content": {
-                "application/json": {"example": {"detail": "Not authenticated"}}
-            },
-        },
         "401": {
             "description": "Unauthorized",
             "content": {
@@ -49,6 +43,23 @@ def invalid_authentication_responses():
                         "non_existent_user": {
                             "summary": "Token pointing to non-existent user",
                             "value": {"detail": "Token pointing to non-existent user"},
+                        },
+                    }
+                }
+            },
+        },
+        "403": {
+            "description": "Forbidden",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "not_authenticated": {
+                            "summary": "Not authenticated",
+                            "value": {"detail": "Not authenticated"},
+                        },
+                        "insufficient_rights": {
+                            "summary": "Insufficient rights",
+                            "value": {"detail": "Insufficient rights"},
                         },
                     }
                 }
