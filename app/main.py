@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from app.routers.api.v1 import authors, genres, sessions, books
+from app.admin.index import admin
 
 app = FastAPI(debug=True)
+admin.mount_to(app)
 
 app.include_router(books.router, prefix="/api/v1/books", tags=["v1 books"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["v1 authors"])

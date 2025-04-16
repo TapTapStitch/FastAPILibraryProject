@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     JWT_SECRET_KEY: str
     JWT_TOKEN_EXPIRATION: int | None = 60
+    COOKIE_SECRET_KEY: str
     TEST_DATABASE_URL: str | None = None
     DEBUG: bool | None = False
 

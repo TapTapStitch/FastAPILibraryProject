@@ -15,3 +15,12 @@ class User(Base):
     access_level = Column(Integer, default=0)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    def is_user(self):
+        return self.access_level == 0
+
+    def is_librarian(self):
+        return self.access_level == 1
+
+    def is_admin(self):
+        return self.access_level == 2

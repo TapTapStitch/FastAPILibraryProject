@@ -26,3 +26,6 @@ def test_create_user(session):
     assert result.access_level == 1
     assert result.created_at is not None
     assert result.updated_at is not None
+    assert not result.is_user()
+    assert result.is_librarian()
+    assert not result.is_admin()
