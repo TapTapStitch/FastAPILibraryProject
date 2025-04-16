@@ -14,48 +14,52 @@ valid_book_data = {
 
 
 @pytest.fixture
-def create_sample_book(client):
-    response = client.post("/api/v1/books/", json=valid_book_data)
+def create_sample_book(authorized_librarian):
+    response = authorized_librarian.post("/api/v1/books/", json=valid_book_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
 
 @pytest.fixture
-def create_sample_author(client):
+def create_sample_author(authorized_librarian):
     author_data = {
         "name": "Jane",
         "surname": "Doe",
         "year_of_birth": 1980,
     }
-    response = client.post("/api/v1/authors/", json=author_data)
+    response = authorized_librarian.post("/api/v1/authors/", json=author_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
 
 @pytest.fixture
-def associate_book_and_author(client, create_sample_book, create_sample_author):
+def associate_book_and_author(
+    authorized_librarian, create_sample_book, create_sample_author
+):
     book_id = create_sample_book["id"]
     author_id = create_sample_author["id"]
-    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_201_CREATED
     return {"book_id": book_id, "author_id": author_id}
 
 
 @pytest.fixture
-def create_sample_genre(client):
+def create_sample_genre(authorized_librarian):
     genre_data = {
         "name": "Fiction",
     }
-    response = client.post("/api/v1/genres/", json=genre_data)
+    response = authorized_librarian.post("/api/v1/genres/", json=genre_data)
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
 
 
 @pytest.fixture
-def associate_book_and_genre(client, create_sample_book, create_sample_genre):
+def associate_book_and_genre(
+    authorized_librarian, create_sample_book, create_sample_genre
+):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_201_CREATED
     return {"book_id": book_id, "genre_id": genre_id}
 
@@ -83,66 +87,68 @@ def test_get_nonexistent_book(client):
 
 
 # Test for creating a new book
-def test_create_book(client):
-    response = client.post("/api/v1/books/", json=valid_book_data)
+def test_create_book(authorized_librarian):
+    response = authorized_librarian.post("/api/v1/books/", json=valid_book_data)
     assert response.status_code == status.HTTP_201_CREATED
     assert "id" in response.json()
     assert response.json()["title"] == valid_book_data["title"]
 
 
 # Test for creating a book with duplicate ISBN
-def test_create_book_with_duplicate_isbn(client, create_sample_book):
+def test_create_book_with_duplicate_isbn(authorized_librarian, create_sample_book):
     duplicate_isbn_data = valid_book_data.copy()
     duplicate_isbn_data["isbn"] = create_sample_book["isbn"]  # Use the same ISBN
-    response = client.post("/api/v1/books/", json=duplicate_isbn_data)
+    response = authorized_librarian.post("/api/v1/books/", json=duplicate_isbn_data)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "ISBN must be unique"}
 
 
 # Test for updating a book
-def test_update_book(client, create_sample_book):
+def test_update_book(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
     updated_data = {"title": "Updated Title", "isbn": "1234567890123"}
-    response = client.patch(f"/api/v1/books/{book_id}", json=updated_data)
+    response = authorized_librarian.patch(f"/api/v1/books/{book_id}", json=updated_data)
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["title"] == updated_data["title"]
 
 
 # Test for updating a non-existent book
-def test_update_nonexistent_book(client):
+def test_update_nonexistent_book(authorized_librarian):
     updated_data = {"title": "Updated Title"}
-    response = client.patch("/api/v1/books/999999", json=updated_data)
+    response = authorized_librarian.patch("/api/v1/books/999999", json=updated_data)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for updating a book with invalid ISBN
-def test_update_book_with_invalid_isbn(client, create_sample_book):
+def test_update_book_with_invalid_isbn(authorized_librarian, create_sample_book):
     another_book = valid_book_data.copy()
     another_book["isbn"] = "1234567890124"
-    client.post("/api/v1/books/", json=another_book)
+    authorized_librarian.post("/api/v1/books/", json=another_book)
     book_id = create_sample_book["id"]
     invalid_isbn_data = {"isbn": "1234567890124"}
-    response = client.patch(f"/api/v1/books/{book_id}", json=invalid_isbn_data)
+    response = authorized_librarian.patch(
+        f"/api/v1/books/{book_id}", json=invalid_isbn_data
+    )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "ISBN must be unique"}
 
 
 # Test for deleting a book
-def test_delete_book(client, create_sample_book):
+def test_delete_book(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/api/v1/books/{book_id}")
+    response = authorized_librarian.delete(f"/api/v1/books/{book_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Check if the book is really deleted
-    response = client.get(f"/api/v1/books/{book_id}")
+    response = authorized_librarian.get(f"/api/v1/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for attempting to delete a non-existent book
-def test_delete_nonexistent_book(client):
-    response = client.delete("/api/v1/books/999999")
+def test_delete_nonexistent_book(authorized_librarian):
+    response = authorized_librarian.delete("/api/v1/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
@@ -167,40 +173,44 @@ def test_get_authors_of_nonexistent_book(client):
 
 # Test for creating a book-author association
 def test_create_book_author_association(
-    client, create_sample_book, create_sample_author
+    authorized_librarian, create_sample_book, create_sample_author
 ):
     book_id = create_sample_book["id"]
     author_id = create_sample_author["id"]
-    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_201_CREATED
 
     # Verify the association exists
-    response = client.get(f"/api/v1/books/{book_id}/authors")
+    response = authorized_librarian.get(f"/api/v1/books/{book_id}/authors")
     authors = response.json()["items"]
     assert any(author["id"] == author_id for author in authors)
 
 
 # Test for creating a duplicate book-author association
-def test_create_duplicate_book_author_association(client, associate_book_and_author):
+def test_create_duplicate_book_author_association(
+    authorized_librarian, associate_book_and_author
+):
     book_id = associate_book_and_author["book_id"]
     author_id = associate_book_and_author["author_id"]
-    response = client.post(f"/api/v1/books/{book_id}/authors/{author_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/{author_id}")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Association already exists"}
 
 
 # Test for creating an association with a non-existent book
-def test_create_book_author_association_nonexistent_book(client, create_sample_author):
+def test_create_book_author_association_nonexistent_book(
+    authorized_librarian, create_sample_author
+):
     author_id = create_sample_author["id"]
-    response = client.post(f"/api/v1/books/999999/authors/{author_id}")
+    response = authorized_librarian.post(f"/api/v1/books/999999/authors/{author_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for creating an association with a non-existent author
-def test_create_book_author_association_nonexistent_author(client, create_sample_book):
+def test_create_book_author_association_nonexistent_author(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.post(f"/api/v1/books/{book_id}/authors/999999")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Author not found"}
 
@@ -264,95 +274,95 @@ def test_get_genres_of_nonexistent_book(client):
 
 
 # Test for creating a book-genre association
-def test_create_book_genre_association(client, create_sample_book, create_sample_genre):
+def test_create_book_genre_association(authorized_librarian, create_sample_book, create_sample_genre):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_201_CREATED
 
     # Verify the association exists
-    response = client.get(f"/api/v1/books/{book_id}/genres")
+    response = authorized_librarian.get(f"/api/v1/books/{book_id}/genres")
     genres = response.json()["items"]
     assert any(genre["id"] == genre_id for genre in genres)
 
 
 # Test for creating a duplicate book-genre association
-def test_create_duplicate_book_genre_association(client, associate_book_and_genre):
+def test_create_duplicate_book_genre_association(authorized_librarian, associate_book_and_genre):
     book_id = associate_book_and_genre["book_id"]
     genre_id = associate_book_and_genre["genre_id"]
-    response = client.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Association already exists"}
 
 
 # Test for creating an association with a non-existent book
-def test_create_book_genre_association_nonexistent_book(client, create_sample_genre):
+def test_create_book_genre_association_nonexistent_book(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.post(f"/api/v1/books/999999/genres/{genre_id}")
+    response = authorized_librarian.post(f"/api/v1/books/999999/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for creating an association with a non-existent genre
-def test_create_book_genre_association_nonexistent_genre(client, create_sample_book):
+def test_create_book_genre_association_nonexistent_genre(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.post(f"/api/v1/books/{book_id}/genres/999999")
+    response = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
 # Test for deleting a book-genre association
-def test_delete_book_genre_association(client, associate_book_and_genre):
+def test_delete_book_genre_association(authorized_librarian, associate_book_and_genre):
     book_id = associate_book_and_genre["book_id"]
     genre_id = associate_book_and_genre["genre_id"]
-    response = client.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
+    response = authorized_librarian.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Verify the association is removed
-    response = client.get(f"/api/v1/books/{book_id}/genres")
+    response = authorized_librarian.get(f"/api/v1/books/{book_id}/genres")
     genres = response.json()["items"]
     assert not any(genre["id"] == genre_id for genre in genres)
 
 
 # Test for deleting a non-existent book-genre association
 def test_delete_nonexistent_book_genre_association(
-    client, create_sample_book, create_sample_genre
+    authorized_librarian, create_sample_book, create_sample_genre
 ):
     book_id = create_sample_book["id"]
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
+    response = authorized_librarian.delete(f"/api/v1/books/{book_id}/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Association not found"}
 
 
 # Test for deleting an association with a non-existent book
-def test_delete_book_genre_association_nonexistent_book(client, create_sample_genre):
+def test_delete_book_genre_association_nonexistent_book(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
-    response = client.delete(f"/api/v1/books/999999/genres/{genre_id}")
+    response = authorized_librarian.delete(f"/api/v1/books/999999/genres/{genre_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Book not found"}
 
 
 # Test for deleting an association with a non-existent genre
-def test_delete_book_genre_association_nonexistent_genre(client, create_sample_book):
+def test_delete_book_genre_association_nonexistent_genre(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
-    response = client.delete(f"/api/v1/books/{book_id}/genres/999999")
+    response = authorized_librarian.delete(f"/api/v1/books/{book_id}/genres/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Genre not found"}
 
 
-def test_sort_books_by_title_ascending(client):
+def test_sort_books_by_title_ascending(authorized_librarian):
     titles = ["TestTitle C", "TestTitle A", "TestTitle B"]
     created_ids = []
     for idx, title in enumerate(titles):
         book_data = valid_book_data.copy()
         book_data["title"] = title
         book_data["isbn"] = str(int(valid_book_data["isbn"]) + idx + 1)
-        response = client.post("/api/v1/books/", json=book_data)
+        response = authorized_librarian.post("/api/v1/books/", json=book_data)
         assert response.status_code == status.HTTP_201_CREATED
         created_ids.append(response.json()["id"])
 
-    response = client.get("/api/v1/books/?sort_by=title&sort_order=asc")
+    response = authorized_librarian.get("/api/v1/books/?sort_by=title&sort_order=asc")
     assert response.status_code == status.HTTP_200_OK
     books = response.json()["items"]
 
@@ -364,7 +374,7 @@ def test_sort_books_by_title_ascending(client):
     ), f"Expected order: {expected_order}, got: {sorted_titles}"
 
 
-def test_sort_books_by_year_descending(client):
+def test_sort_books_by_year_descending(authorized_librarian):
     years = [1990, 2000, 1980]
     created_ids = []
     for idx, year in enumerate(years):
@@ -373,11 +383,11 @@ def test_sort_books_by_year_descending(client):
         book_data["year_of_publication"] = year
 
         book_data["isbn"] = str(int(valid_book_data["isbn"]) + (idx + 10))
-        response = client.post("/api/v1/books/", json=book_data)
+        response = authorized_librarian.post("/api/v1/books/", json=book_data)
         assert response.status_code == status.HTTP_201_CREATED
         created_ids.append(response.json()["id"])
 
-    response = client.get("/api/v1/books/?sort_by=year_of_publication&sort_order=desc")
+    response = authorized_librarian.get("/api/v1/books/?sort_by=year_of_publication&sort_order=desc")
     assert response.status_code == status.HTTP_200_OK
     books = response.json()["items"]
 
@@ -390,7 +400,7 @@ def test_sort_books_by_year_descending(client):
 
 
 # Test for sorting authors by name in ascending order for a given book
-def test_sort_authors_by_name_ascending(client, create_sample_book):
+def test_sort_authors_by_name_ascending(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
     authors = [
         {"name": "Charlie", "surname": "Smith", "year_of_birth": 1970},
@@ -399,14 +409,14 @@ def test_sort_authors_by_name_ascending(client, create_sample_book):
     ]
     created_author_ids = []
     for author in authors:
-        response = client.post("/api/v1/authors/", json=author)
+        response = authorized_librarian.post("/api/v1/authors/", json=author)
         assert response.status_code == status.HTTP_201_CREATED
         author_obj = response.json()
         created_author_ids.append(author_obj["id"])
-        resp_assoc = client.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
+        resp_assoc = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
         assert resp_assoc.status_code == status.HTTP_201_CREATED
 
-    response = client.get(
+    response = authorized_librarian.get(
         f"/api/v1/books/{book_id}/authors?sort_by=name&sort_order=asc"
     )
     assert response.status_code == status.HTTP_200_OK
@@ -420,7 +430,7 @@ def test_sort_authors_by_name_ascending(client, create_sample_book):
 
 
 # Test for sorting authors by year_of_birth in descending order for a given book
-def test_sort_authors_by_year_of_birth_descending(client, create_sample_book):
+def test_sort_authors_by_year_of_birth_descending(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
     authors = [
         {"name": "Author A", "surname": "X", "year_of_birth": 1960},
@@ -429,14 +439,14 @@ def test_sort_authors_by_year_of_birth_descending(client, create_sample_book):
     ]
     created_author_ids = []
     for author in authors:
-        response = client.post("/api/v1/authors/", json=author)
+        response = authorized_librarian.post("/api/v1/authors/", json=author)
         assert response.status_code == status.HTTP_201_CREATED
         author_obj = response.json()
         created_author_ids.append(author_obj["id"])
-        resp_assoc = client.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
+        resp_assoc = authorized_librarian.post(f"/api/v1/books/{book_id}/authors/{author_obj['id']}")
         assert resp_assoc.status_code == status.HTTP_201_CREATED
 
-    response = client.get(
+    response = authorized_librarian.get(
         f"/api/v1/books/{book_id}/authors?sort_by=year_of_birth&sort_order=desc"
     )
     assert response.status_code == status.HTTP_200_OK
@@ -451,7 +461,7 @@ def test_sort_authors_by_year_of_birth_descending(client, create_sample_book):
 
 
 # Test for sorting genres by name in ascending order for a given book
-def test_sort_genres_by_name_ascending(client, create_sample_book):
+def test_sort_genres_by_name_ascending(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
     genres = [
         {"name": "Mystery"},
@@ -460,14 +470,14 @@ def test_sort_genres_by_name_ascending(client, create_sample_book):
     ]
     created_genre_ids = []
     for genre in genres:
-        response = client.post("/api/v1/genres/", json=genre)
+        response = authorized_librarian.post("/api/v1/genres/", json=genre)
         assert response.status_code == status.HTTP_201_CREATED
         genre_obj = response.json()
         created_genre_ids.append(genre_obj["id"])
-        resp_assoc = client.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
+        resp_assoc = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
         assert resp_assoc.status_code == status.HTTP_201_CREATED
 
-    response = client.get(f"/api/v1/books/{book_id}/genres?sort_by=name&sort_order=asc")
+    response = authorized_librarian.get(f"/api/v1/books/{book_id}/genres?sort_by=name&sort_order=asc")
     assert response.status_code == status.HTTP_200_OK
     result_genres = response.json()["items"]
 
@@ -480,7 +490,7 @@ def test_sort_genres_by_name_ascending(client, create_sample_book):
 
 
 # Test for sorting genres by name in descending order for a given book
-def test_sort_genres_by_name_descending(client, create_sample_book):
+def test_sort_genres_by_name_descending(authorized_librarian, create_sample_book):
     book_id = create_sample_book["id"]
     genres = [
         {"name": "Romance"},
@@ -489,14 +499,14 @@ def test_sort_genres_by_name_descending(client, create_sample_book):
     ]
     created_genre_ids = []
     for genre in genres:
-        response = client.post("/api/v1/genres/", json=genre)
+        response = authorized_librarian.post("/api/v1/genres/", json=genre)
         assert response.status_code == status.HTTP_201_CREATED
         genre_obj = response.json()
         created_genre_ids.append(genre_obj["id"])
-        resp_assoc = client.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
+        resp_assoc = authorized_librarian.post(f"/api/v1/books/{book_id}/genres/{genre_obj['id']}")
         assert resp_assoc.status_code == status.HTTP_201_CREATED
 
-    response = client.get(
+    response = authorized_librarian.get(
         f"/api/v1/books/{book_id}/genres?sort_by=name&sort_order=desc"
     )
     assert response.status_code == status.HTTP_200_OK

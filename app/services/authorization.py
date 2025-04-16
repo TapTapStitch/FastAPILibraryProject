@@ -1,4 +1,5 @@
 import jwt
+from enum import IntEnum
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -8,8 +9,13 @@ from app.schemas.token import Token
 from app.config import get_db
 from app.models.user import User
 
-
 auth_bearer = HTTPBearer()
+
+
+class Role(IntEnum):
+    USER = 0
+    LIBRARIAN = 1
+    ADMIN = 2
 
 
 def create_jwt_token(user_id: int):
@@ -44,3 +50,14 @@ def get_current_user(
             status_code=401, detail="Token pointing to non-existent user"
         )
     return user
+
+
+def get_current_user_with_minimum_role(required_role: Role):
+    def dependency(
+        user: User = Depends(get_current_user),
+    ):
+        if user.access_level < required_role:
+            raise HTTPException(status_code=403, detail="Insufficient rights")
+        return user
+
+    return dependency

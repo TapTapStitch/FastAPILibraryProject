@@ -12,9 +12,10 @@ from app.crud.api.v1.books import BooksCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
+    invalid_authentication_responses,
     combine_responses,
 )
-from app.routers.api.v1.shared.depends import get_books_crud
+from app.routers.api.v1.shared.depends import get_books_crud, get_librarian_user
 
 router = APIRouter()
 
@@ -39,10 +40,14 @@ async def get_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
     "/",
     response_model=BookSchema,
     status_code=201,
-    responses=bad_request_response("ISBN must be unique"),
+    responses=combine_responses(
+        bad_request_response("ISBN must be unique"), invalid_authentication_responses()
+    ),
 )
 async def create_book(
-    book: CreateBookSchema, crud: BooksCrud = Depends(get_books_crud)
+    book: CreateBookSchema,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     return crud.create_book(book_data=book)
 
@@ -51,17 +56,32 @@ async def create_book(
     "/{book_id}",
     response_model=BookSchema,
     responses=combine_responses(
-        bad_request_response("ISBN must be unique"), not_found_response("book")
+        bad_request_response("ISBN must be unique"),
+        not_found_response("book"),
+        invalid_authentication_responses(),
     ),
 )
 async def update_book(
-    book_id: int, book: UpdateBookSchema, crud: BooksCrud = Depends(get_books_crud)
+    book_id: int,
+    book: UpdateBookSchema,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     return crud.update_book(book_id=book_id, book_data=book)
 
 
-@router.delete("/{book_id}", status_code=204, responses=not_found_response("book"))
-async def delete_book(book_id: int, crud: BooksCrud = Depends(get_books_crud)):
+@router.delete(
+    "/{book_id}",
+    status_code=204,
+    responses=combine_responses(
+        not_found_response("book"), invalid_authentication_responses()
+    ),
+)
+async def delete_book(
+    book_id: int,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
+):
     crud.remove_book(book_id=book_id)
     return Response(status_code=204)
 
@@ -89,10 +109,14 @@ def get_authors_of_book(
         not_found_response("book"),
         not_found_response("author"),
         bad_request_response("Association already exists"),
+        invalid_authentication_responses(),
     ),
 )
 def create_book_author_association(
-    book_id: int, author_id: int, crud: BooksCrud = Depends(get_books_crud)
+    book_id: int,
+    author_id: int,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.create_book_author_association(book_id=book_id, author_id=author_id)
     return Response(status_code=201)
@@ -105,10 +129,14 @@ def create_book_author_association(
         not_found_response("book"),
         not_found_response("author"),
         not_found_response("association"),
+        invalid_authentication_responses(),
     ),
 )
 async def delete_book_author_association(
-    book_id: int, author_id: int, crud: BooksCrud = Depends(get_books_crud)
+    book_id: int,
+    author_id: int,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.remove_book_author_association(book_id=book_id, author_id=author_id)
     return Response(status_code=204)
@@ -137,10 +165,14 @@ def get_genres_of_book(
         not_found_response("book"),
         not_found_response("genre"),
         bad_request_response("Association already exists"),
+        invalid_authentication_responses(),
     ),
 )
 def create_book_genre_association(
-    book_id: int, genre_id: int, crud: BooksCrud = Depends(get_books_crud)
+    book_id: int,
+    genre_id: int,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.create_book_genre_association(book_id=book_id, genre_id=genre_id)
     return Response(status_code=201)
@@ -153,10 +185,14 @@ def create_book_genre_association(
         not_found_response("book"),
         not_found_response("genre"),
         not_found_response("association"),
+        invalid_authentication_responses(),
     ),
 )
 async def delete_book_genre_association(
-    book_id: int, genre_id: int, crud: BooksCrud = Depends(get_books_crud)
+    book_id: int,
+    genre_id: int,
+    crud: BooksCrud = Depends(get_books_crud),
+    current_user=Depends(get_librarian_user),
 ):
     crud.remove_book_genre_association(book_id=book_id, genre_id=genre_id)
     return Response(status_code=204)
