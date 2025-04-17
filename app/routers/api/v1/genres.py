@@ -4,14 +4,20 @@ from app.schemas.api.v1.genre import (
     CreateGenreSchema,
     UpdateGenreSchema,
     GenreSortingSchema,
+    genre_search_dependency,
 )
-from app.schemas.api.v1.book import BookSchema, BookSortingSchema
+from app.schemas.api.v1.book import (
+    BookSchema,
+    BookSortingSchema,
+    book_search_dependency,
+)
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.genres import GenresCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     invalid_authentication_responses,
+    filtering_validation_error_response,
     combine_responses,
 )
 from app.routers.api.v1.shared.depends import get_genres_crud, get_librarian_user
@@ -19,13 +25,20 @@ from app.routers.api.v1.shared.depends import get_genres_crud, get_librarian_use
 router = APIRouter()
 
 
-@router.get("/", response_model=PaginatedResponse[GenreSchema])
+@router.get(
+    "/",
+    response_model=PaginatedResponse[GenreSchema],
+    responses=filtering_validation_error_response(),
+)
 async def get_genres(
+    filters: dict = Depends(genre_search_dependency),
     sorting_params: GenreSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: GenresCrud = Depends(get_genres_crud),
 ):
-    return crud.get_genres(pagination=pagination, sorting_params=sorting_params)
+    return crud.get_genres(
+        filters=filters, sorting_params=sorting_params, pagination=pagination
+    )
 
 
 @router.get(
@@ -84,16 +97,22 @@ async def delete_genre(
 @router.get(
     "/{genre_id}/books",
     response_model=PaginatedResponse[BookSchema],
-    responses=not_found_response("genre"),
+    responses=combine_responses(
+        not_found_response("genre"), filtering_validation_error_response()
+    ),
 )
 def get_books_of_genre(
     genre_id: int,
+    filters: dict = Depends(book_search_dependency),
     sorting_params: BookSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: GenresCrud = Depends(get_genres_crud),
 ):
     return crud.get_books_of_genre(
-        genre_id=genre_id, pagination=pagination, sorting_params=sorting_params
+        genre_id=genre_id,
+        filters=filters,
+        sorting_params=sorting_params,
+        pagination=pagination,
     )
 
 

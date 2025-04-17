@@ -161,7 +161,7 @@ def test_remove_book_not_found(book_crud):
 def test_get_authors_of_book(book_crud, sample_book, book_author_association):
     pagination = PaginationParams(page=1, size=10)
     authors = book_crud.get_authors_of_book(
-        sample_book.id, pagination, AuthorSortingSchema()
+        sample_book.id, {}, AuthorSortingSchema(), pagination
     )
     assert len(authors.items) == 1
     assert authors.items[0].name == "Sample Author"
@@ -172,7 +172,7 @@ def test_get_authors_of_non_existent_book(book_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         book_crud.get_authors_of_book(
-            999, pagination, AuthorSortingSchema()
+            999, {}, AuthorSortingSchema(), pagination
         )  # Assuming book ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Book not found"
@@ -271,7 +271,7 @@ def test_get_genres_of_book(
 ):
     pagination = PaginationParams(page=1, size=10)
     genres = book_crud.get_genres_of_book(
-        sample_book.id, pagination, GenreSortingSchema()
+        sample_book.id, {}, GenreSortingSchema(), pagination
     )
     assert len(genres.items) == 1
     assert genres.items[0].name == "Fiction"
@@ -282,7 +282,7 @@ def test_get_genres_of_non_existent_book(book_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         book_crud.get_genres_of_book(
-            999, pagination, GenreSortingSchema()
+            999, {}, GenreSortingSchema(), pagination
         )  # Assuming book ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Book not found"

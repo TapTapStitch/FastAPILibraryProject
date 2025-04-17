@@ -25,7 +25,9 @@ def create_sample_book(authorized_librarian):
 
 
 @pytest.fixture
-def associate_genre_and_book(authorized_librarian, create_sample_genre, create_sample_book):
+def associate_genre_and_book(
+    authorized_librarian, create_sample_genre, create_sample_book
+):
     genre_id = create_sample_genre["id"]
     book_id = create_sample_book["id"]
     response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
@@ -74,7 +76,9 @@ def test_create_genre_with_missing_data(authorized_librarian):
 def test_update_genre(authorized_librarian, create_sample_genre):
     genre_id = create_sample_genre["id"]
     updated_data = {"name": "Updated Genre"}
-    response = authorized_librarian.patch(f"/api/v1/genres/{genre_id}", json=updated_data)
+    response = authorized_librarian.patch(
+        f"/api/v1/genres/{genre_id}", json=updated_data
+    )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["name"] == updated_data["name"]
 
@@ -125,7 +129,9 @@ def test_get_books_of_nonexistent_genre(client):
 
 
 # Test for creating a genre-book association
-def test_create_genre_book_association(authorized_librarian, create_sample_genre, create_sample_book):
+def test_create_genre_book_association(
+    authorized_librarian, create_sample_genre, create_sample_book
+):
     genre_id = create_sample_genre["id"]
     book_id = create_sample_book["id"]
     response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
@@ -138,7 +144,9 @@ def test_create_genre_book_association(authorized_librarian, create_sample_genre
 
 
 # Test for creating a duplicate genre-book association
-def test_create_duplicate_genre_book_association(authorized_librarian, associate_genre_and_book):
+def test_create_duplicate_genre_book_association(
+    authorized_librarian, associate_genre_and_book
+):
     genre_id = associate_genre_and_book["genre_id"]
     book_id = associate_genre_and_book["book_id"]
     response = authorized_librarian.post(f"/api/v1/genres/{genre_id}/books/{book_id}")
@@ -251,7 +259,9 @@ def test_sort_genres_by_name_descending(authorized_librarian):
 
 
 # Test for sorting books of a genre by title in ascending order
-def test_sort_books_of_genre_by_title_ascending(authorized_librarian, create_sample_genre):
+def test_sort_books_of_genre_by_title_ascending(
+    authorized_librarian, create_sample_genre
+):
     genre_id = create_sample_genre["id"]
     titles = ["Alpha", "Charlie", "Bravo"]
     created_ids = []
@@ -288,7 +298,9 @@ def test_sort_books_of_genre_by_title_ascending(authorized_librarian, create_sam
 
 
 # Test for sorting books of a genre by year_of_publication in descending order
-def test_sort_books_of_genre_by_year_descending(authorized_librarian, create_sample_genre):
+def test_sort_books_of_genre_by_year_descending(
+    authorized_librarian, create_sample_genre
+):
     genre_id = create_sample_genre["id"]
     years = [1995, 2005, 1985]
     created_ids = []

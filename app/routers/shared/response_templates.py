@@ -79,6 +79,32 @@ def invalid_password_response():
     }
 
 
+def filtering_validation_error_response():
+    return {
+        "422": {
+            "description": "Validation Error",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "unsupported_operator": {
+                            "summary": "Unsupported filter operator",
+                            "value": {
+                                "detail": "Unsupported filter operator: '<operator>'"
+                            },
+                        },
+                        "disallowed_field": {
+                            "summary": "Filtering by field not allowed",
+                            "value": {
+                                "detail": "Filtering by '<field>' is not allowed."
+                            },
+                        },
+                    }
+                }
+            },
+        }
+    }
+
+
 def combine_responses(*responses):
     combined = {}
     for response in responses:

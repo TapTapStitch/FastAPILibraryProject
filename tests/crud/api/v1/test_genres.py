@@ -91,7 +91,7 @@ def test_remove_genre_not_found(genre_crud):
 def test_get_books_of_genre(genre_crud, sample_genre, genre_book_association):
     pagination = PaginationParams(page=1, size=10)
     books = genre_crud.get_books_of_genre(
-        sample_genre.id, pagination, BookSortingSchema()
+        sample_genre.id, {}, BookSortingSchema(), pagination
     )
     assert len(books.items) == 1
     assert books.items[0].title == "Sample Book"
@@ -102,7 +102,7 @@ def test_get_books_of_non_existent_genre(genre_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         genre_crud.get_books_of_genre(
-            999, pagination, BookSortingSchema()
+            999, {}, BookSortingSchema(), pagination
         )  # Assuming genre ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Genre not found"

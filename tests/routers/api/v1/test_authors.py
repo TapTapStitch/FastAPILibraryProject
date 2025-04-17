@@ -26,7 +26,9 @@ def create_sample_book(authorized_librarian):
 
 
 @pytest.fixture
-def associate_author_and_book(authorized_librarian, create_sample_author, create_sample_book):
+def associate_author_and_book(
+    authorized_librarian, create_sample_author, create_sample_book
+):
     author_id = create_sample_author["id"]
     book_id = create_sample_book["id"]
     response = authorized_librarian.post(f"/api/v1/authors/{author_id}/books/{book_id}")
@@ -90,7 +92,9 @@ def test_update_author(authorized_librarian, create_sample_author):
         "surname": "Updated Surname",
         "year_of_birth": "1985",
     }
-    response = authorized_librarian.patch(f"/api/v1/authors/{author_id}", json=updated_data)
+    response = authorized_librarian.patch(
+        f"/api/v1/authors/{author_id}", json=updated_data
+    )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["name"] == updated_data["name"]
 
@@ -156,7 +160,9 @@ def test_create_author_book_association(
 
 
 # Test for creating a duplicate author-book association
-def test_create_duplicate_author_book_association(authorized_librarian, associate_author_and_book):
+def test_create_duplicate_author_book_association(
+    authorized_librarian, associate_author_and_book
+):
     author_id = associate_author_and_book["author_id"]
     book_id = associate_author_and_book["book_id"]
     response = authorized_librarian.post(f"/api/v1/authors/{author_id}/books/{book_id}")
@@ -165,7 +171,9 @@ def test_create_duplicate_author_book_association(authorized_librarian, associat
 
 
 # Test for creating an association with a non-existent author
-def test_create_association_nonexistent_author(authorized_librarian, create_sample_book):
+def test_create_association_nonexistent_author(
+    authorized_librarian, create_sample_book
+):
     book_id = create_sample_book["id"]
     response = authorized_librarian.post(f"/api/v1/authors/999999/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -173,7 +181,9 @@ def test_create_association_nonexistent_author(authorized_librarian, create_samp
 
 
 # Test for creating an association with a non-existent book
-def test_create_association_nonexistent_book(authorized_librarian, create_sample_author):
+def test_create_association_nonexistent_book(
+    authorized_librarian, create_sample_author
+):
     author_id = create_sample_author["id"]
     response = authorized_librarian.post(f"/api/v1/authors/{author_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -181,10 +191,14 @@ def test_create_association_nonexistent_book(authorized_librarian, create_sample
 
 
 # Test for deleting an author-book association
-def test_delete_author_book_association(authorized_librarian, associate_author_and_book):
+def test_delete_author_book_association(
+    authorized_librarian, associate_author_and_book
+):
     author_id = associate_author_and_book["author_id"]
     book_id = associate_author_and_book["book_id"]
-    response = authorized_librarian.delete(f"/api/v1/authors/{author_id}/books/{book_id}")
+    response = authorized_librarian.delete(
+        f"/api/v1/authors/{author_id}/books/{book_id}"
+    )
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Verify the association is removed
@@ -199,13 +213,17 @@ def test_delete_nonexistent_author_book_association(
 ):
     author_id = create_sample_author["id"]
     book_id = create_sample_book["id"]
-    response = authorized_librarian.delete(f"/api/v1/authors/{author_id}/books/{book_id}")
+    response = authorized_librarian.delete(
+        f"/api/v1/authors/{author_id}/books/{book_id}"
+    )
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "Association not found"}
 
 
 # Test for deleting an association with a non-existent author
-def test_delete_association_nonexistent_author(authorized_librarian, create_sample_book):
+def test_delete_association_nonexistent_author(
+    authorized_librarian, create_sample_book
+):
     book_id = create_sample_book["id"]
     response = authorized_librarian.delete(f"/api/v1/authors/999999/books/{book_id}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -213,7 +231,9 @@ def test_delete_association_nonexistent_author(authorized_librarian, create_samp
 
 
 # Test for deleting an association with a non-existent book
-def test_delete_association_nonexistent_book(authorized_librarian, create_sample_author):
+def test_delete_association_nonexistent_book(
+    authorized_librarian, create_sample_author
+):
     author_id = create_sample_author["id"]
     response = authorized_librarian.delete(f"/api/v1/authors/{author_id}/books/999999")
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -260,7 +280,9 @@ def test_sort_authors_by_year_descending(authorized_librarian):
         assert response.status_code == status.HTTP_201_CREATED
         created_ids.append(response.json()["id"])
 
-    response = authorized_librarian.get("/api/v1/authors/?sort_by=year_of_birth&sort_order=desc")
+    response = authorized_librarian.get(
+        "/api/v1/authors/?sort_by=year_of_birth&sort_order=desc"
+    )
     assert response.status_code == status.HTTP_200_OK
     authors = response.json()["items"]
 
@@ -273,7 +295,9 @@ def test_sort_authors_by_year_descending(authorized_librarian):
 
 
 # Test for sorting books of an author by title in ascending order
-def test_sort_books_of_author_by_title_ascending(authorized_librarian, create_sample_author):
+def test_sort_books_of_author_by_title_ascending(
+    authorized_librarian, create_sample_author
+):
     author_id = create_sample_author["id"]
     titles = ["Alpha", "Charlie", "Bravo"]
     created_ids = []
@@ -310,7 +334,9 @@ def test_sort_books_of_author_by_title_ascending(authorized_librarian, create_sa
 
 
 # Test for sorting books of an author by year_of_publication in descending order
-def test_sort_books_of_author_by_year_descending(authorized_librarian, create_sample_author):
+def test_sort_books_of_author_by_year_descending(
+    authorized_librarian, create_sample_author
+):
     author_id = create_sample_author["id"]
     years = [1995, 2005, 1985]
     created_ids = []

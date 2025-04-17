@@ -4,15 +4,25 @@ from app.schemas.api.v1.book import (
     CreateBookSchema,
     UpdateBookSchema,
     BookSortingSchema,
+    book_search_dependency,
 )
-from app.schemas.api.v1.author import AuthorSchema, AuthorSortingSchema
-from app.schemas.api.v1.genre import GenreSchema, GenreSortingSchema
+from app.schemas.api.v1.author import (
+    AuthorSchema,
+    AuthorSortingSchema,
+    author_search_dependency,
+)
+from app.schemas.api.v1.genre import (
+    GenreSchema,
+    GenreSortingSchema,
+    genre_search_dependency,
+)
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.books import BooksCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     invalid_authentication_responses,
+    filtering_validation_error_response,
     combine_responses,
 )
 from app.routers.api.v1.shared.depends import get_books_crud, get_librarian_user
@@ -20,13 +30,22 @@ from app.routers.api.v1.shared.depends import get_books_crud, get_librarian_user
 router = APIRouter()
 
 
-@router.get("/", response_model=PaginatedResponse[BookSchema])
+@router.get(
+    "/",
+    response_model=PaginatedResponse[BookSchema],
+    responses=filtering_validation_error_response(),
+)
 async def get_books(
+    filters: dict = Depends(book_search_dependency),
     sorting_params: BookSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
 ):
-    return crud.get_books(pagination=pagination, sorting_params=sorting_params)
+    return crud.get_books(
+        filters=filters,
+        sorting_params=sorting_params,
+        pagination=pagination,
+    )
 
 
 @router.get(
@@ -89,16 +108,22 @@ async def delete_book(
 @router.get(
     "/{book_id}/authors",
     response_model=PaginatedResponse[AuthorSchema],
-    responses=not_found_response("book"),
+    responses=combine_responses(
+        not_found_response("book"), filtering_validation_error_response()
+    ),
 )
 def get_authors_of_book(
     book_id: int,
+    filters: dict = Depends(author_search_dependency),
     sorting_params: AuthorSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
 ):
     return crud.get_authors_of_book(
-        book_id=book_id, pagination=pagination, sorting_params=sorting_params
+        book_id=book_id,
+        filters=filters,
+        sorting_params=sorting_params,
+        pagination=pagination,
     )
 
 
@@ -145,16 +170,22 @@ async def delete_book_author_association(
 @router.get(
     "/{book_id}/genres",
     response_model=PaginatedResponse[GenreSchema],
-    responses=not_found_response("book"),
+    responses=combine_responses(
+        not_found_response("book"), filtering_validation_error_response()
+    ),
 )
 def get_genres_of_book(
     book_id: int,
+    filters: dict = Depends(genre_search_dependency),
     sorting_params: GenreSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: BooksCrud = Depends(get_books_crud),
 ):
     return crud.get_genres_of_book(
-        book_id=book_id, pagination=pagination, sorting_params=sorting_params
+        book_id=book_id,
+        filters=filters,
+        sorting_params=sorting_params,
+        pagination=pagination,
     )
 
 

@@ -12,12 +12,17 @@ from app.schemas.api.v1.author import (
 from app.schemas.api.v1.book import BookSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.services.sorting import apply_sorting
+from app.services.search import apply_filters
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_association_does_not_exist,
     fetch_association,
 )
 from app.crud.api.v1.shared.sort_fields import book_sort_fields, author_sort_fields
+from app.crud.api.v1.shared.search_filelds import (
+    book_search_fields,
+    author_search_fields,
+)
 
 
 class AuthorsCrud:
@@ -25,9 +30,14 @@ class AuthorsCrud:
         self.db = db
 
     def get_authors(
-        self, pagination: PaginationParams, sorting_params: AuthorSortingSchema
+        self,
+        filters: dict,
+        sorting_params: AuthorSortingSchema,
+        pagination: PaginationParams,
     ):
         stmt = select(Author)
+        if any(filters):
+            stmt = apply_filters(stmt, filters, author_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, author_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
@@ -61,8 +71,9 @@ class AuthorsCrud:
     def get_books_of_author(
         self,
         author_id: int,
-        pagination: PaginationParams,
+        filters: dict,
         sorting_params: BookSortingSchema,
+        pagination: PaginationParams,
     ):
         self.get_author_by_id(author_id)
         stmt = (
@@ -70,6 +81,8 @@ class AuthorsCrud:
             .join(BookAuthor, Book.id == BookAuthor.book_id)
             .where(BookAuthor.author_id == author_id)
         )
+        if any(filters):
+            stmt = apply_filters(stmt, filters, book_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, book_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)

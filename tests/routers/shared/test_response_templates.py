@@ -4,6 +4,7 @@ from app.routers.shared.response_templates import (
     combine_responses,
     invalid_authentication_responses,
     invalid_password_response,
+    filtering_validation_error_response,
 )
 
 
@@ -92,6 +93,33 @@ def test_invalid_password_response():
         }
     }
     assert invalid_password_response() == expected
+
+
+def test_filtering_validation_error_response():
+    expected = {
+        "422": {
+            "description": "Validation Error",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "unsupported_operator": {
+                            "summary": "Unsupported filter operator",
+                            "value": {
+                                "detail": "Unsupported filter operator: '<operator>'"
+                            },
+                        },
+                        "disallowed_field": {
+                            "summary": "Filtering by field not allowed",
+                            "value": {
+                                "detail": "Filtering by '<field>' is not allowed."
+                            },
+                        },
+                    }
+                }
+            },
+        }
+    }
+    assert filtering_validation_error_response() == expected
 
 
 def test_combine_responses():
