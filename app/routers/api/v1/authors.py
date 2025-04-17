@@ -4,14 +4,20 @@ from app.schemas.api.v1.author import (
     CreateAuthorSchema,
     UpdateAuthorSchema,
     AuthorSortingSchema,
+    author_search_dependency,
 )
-from app.schemas.api.v1.book import BookSchema, BookSortingSchema
+from app.schemas.api.v1.book import (
+    BookSchema,
+    BookSortingSchema,
+    book_search_dependency,
+)
 from app.schemas.pagination import PaginationParams, PaginatedResponse
 from app.crud.api.v1.authors import AuthorsCrud
 from app.routers.shared.response_templates import (
     not_found_response,
     bad_request_response,
     invalid_authentication_responses,
+    filtering_validation_error_response,
     combine_responses,
 )
 from app.routers.api.v1.shared.depends import get_authors_crud, get_librarian_user
@@ -19,13 +25,20 @@ from app.routers.api.v1.shared.depends import get_authors_crud, get_librarian_us
 router = APIRouter()
 
 
-@router.get("/", response_model=PaginatedResponse[AuthorSchema])
+@router.get(
+    "/",
+    response_model=PaginatedResponse[AuthorSchema],
+    responses=filtering_validation_error_response(),
+)
 async def get_authors(
+    filters: dict = Depends(author_search_dependency),
     sorting_params: AuthorSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: AuthorsCrud = Depends(get_authors_crud),
 ):
-    return crud.get_authors(pagination=pagination, sorting_params=sorting_params)
+    return crud.get_authors(
+        filters=filters, sorting_params=sorting_params, pagination=pagination
+    )
 
 
 @router.get(
@@ -84,16 +97,22 @@ async def delete_author(
 @router.get(
     "/{author_id}/books",
     response_model=PaginatedResponse[BookSchema],
-    responses=not_found_response("author"),
+    responses=combine_responses(
+        not_found_response("author"), filtering_validation_error_response()
+    ),
 )
 def get_books_of_author(
     author_id: int,
+    filters: dict = Depends(book_search_dependency),
     sorting_params: BookSortingSchema = Depends(),
     pagination: PaginationParams = Depends(),
     crud: AuthorsCrud = Depends(get_authors_crud),
 ):
     return crud.get_books_of_author(
-        author_id=author_id, pagination=pagination, sorting_params=sorting_params
+        author_id=author_id,
+        filters=filters,
+        sorting_params=sorting_params,
+        pagination=pagination,
     )
 
 

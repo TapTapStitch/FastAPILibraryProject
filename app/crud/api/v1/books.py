@@ -15,6 +15,7 @@ from app.schemas.api.v1.author import AuthorSortingSchema
 from app.schemas.api.v1.genre import GenreSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.services.sorting import apply_sorting
+from app.services.search import apply_filters
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_unique,
@@ -26,6 +27,11 @@ from app.crud.api.v1.shared.sort_fields import (
     author_sort_fields,
     genre_sort_fields,
 )
+from app.crud.api.v1.shared.search_filelds import (
+    book_search_fields,
+    author_search_fields,
+    genre_search_fields,
+)
 
 
 class BooksCrud:
@@ -33,9 +39,14 @@ class BooksCrud:
         self.db = db
 
     def get_books(
-        self, pagination: PaginationParams, sorting_params: BookSortingSchema
+        self,
+        filters: dict,
+        sorting_params: BookSortingSchema,
+        pagination: PaginationParams,
     ):
         stmt = select(Book)
+        if any(filters):
+            stmt = apply_filters(stmt, filters, book_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, book_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
@@ -75,8 +86,9 @@ class BooksCrud:
     def get_authors_of_book(
         self,
         book_id: int,
-        pagination: PaginationParams,
+        filters: dict,
         sorting_params: AuthorSortingSchema,
+        pagination: PaginationParams,
     ):
         self.get_book_by_id(book_id)
         stmt = (
@@ -84,6 +96,8 @@ class BooksCrud:
             .join(BookAuthor, Author.id == BookAuthor.author_id)
             .where(BookAuthor.book_id == book_id)
         )
+        if any(filters):
+            stmt = apply_filters(stmt, filters, author_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, author_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
@@ -113,8 +127,9 @@ class BooksCrud:
     def get_genres_of_book(
         self,
         book_id: int,
-        pagination: PaginationParams,
+        filters: dict,
         sorting_params: GenreSortingSchema,
+        pagination: PaginationParams,
     ):
         self.get_book_by_id(book_id)
         stmt = (
@@ -122,6 +137,8 @@ class BooksCrud:
             .join(BookGenre, Genre.id == BookGenre.genre_id)
             .where(BookGenre.book_id == book_id)
         )
+        if any(filters):
+            stmt = apply_filters(stmt, filters, genre_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, genre_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)

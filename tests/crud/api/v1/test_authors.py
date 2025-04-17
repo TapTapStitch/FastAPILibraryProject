@@ -103,7 +103,7 @@ def test_remove_author_not_found(author_crud):
 def test_get_books_of_author(author_crud, sample_author, author_book_association):
     pagination = PaginationParams(page=1, size=10)
     books = author_crud.get_books_of_author(
-        sample_author.id, pagination, BookSortingSchema()
+        sample_author.id, {}, BookSortingSchema(), pagination
     )
     assert len(books.items) == 1
     assert books.items[0].title == "Sample Book"
@@ -114,7 +114,7 @@ def test_get_books_of_non_existent_author(author_crud):
     pagination = PaginationParams(page=1, size=10)
     with pytest.raises(HTTPException) as excinfo:
         author_crud.get_books_of_author(
-            999, pagination, BookSortingSchema()
+            999, {}, BookSortingSchema(), pagination
         )  # Assuming author ID 999 doesn't exist
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Author not found"

@@ -12,12 +12,17 @@ from app.schemas.api.v1.genre import (
 from app.schemas.api.v1.book import BookSortingSchema
 from app.schemas.pagination import PaginationParams
 from app.services.sorting import apply_sorting
+from app.services.search import apply_filters
 from app.crud.shared.db_utils import (
     fetch_by_id,
     ensure_association_does_not_exist,
     fetch_association,
 )
 from app.crud.api.v1.shared.sort_fields import book_sort_fields, genre_sort_fields
+from app.crud.api.v1.shared.search_filelds import (
+    book_search_fields,
+    genre_search_fields,
+)
 
 
 class GenresCrud:
@@ -25,9 +30,14 @@ class GenresCrud:
         self.db = db
 
     def get_genres(
-        self, pagination: PaginationParams, sorting_params: GenreSortingSchema
+        self,
+        filters: dict,
+        sorting_params: GenreSortingSchema,
+        pagination: PaginationParams,
     ):
         stmt = select(Genre)
+        if any(filters):
+            stmt = apply_filters(stmt, filters, genre_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, genre_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
@@ -61,8 +71,9 @@ class GenresCrud:
     def get_books_of_genre(
         self,
         genre_id: int,
-        pagination: PaginationParams,
+        filters: dict,
         sorting_params: BookSortingSchema,
+        pagination: PaginationParams,
     ):
         self.get_genre_by_id(genre_id)
         stmt = (
@@ -70,6 +81,8 @@ class GenresCrud:
             .join(BookGenre, Book.id == BookGenre.book_id)
             .where(BookGenre.genre_id == genre_id)
         )
+        if any(filters):
+            stmt = apply_filters(stmt, filters, book_search_fields)
         if sorting_params.sort_by:
             stmt = apply_sorting(stmt, sorting_params, book_sort_fields)
         return paginate(self.db, stmt=stmt, pagination=pagination)
